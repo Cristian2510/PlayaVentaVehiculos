@@ -1,38 +1,81 @@
-# Sistema de Gestión de Vehículos
+# PlayaVentaVehículos 🚗
 
 Sistema completo de gestión de venta de vehículos con funcionalidades de:
 
-- Catastro de vehículos
-- Gestión de clientes
-- Ventas con múltiples formas de pago
-- Financiamiento con cuotas
-- Control de deudas y pagos
-- Cuentas corrientes
-- Dashboard con estadísticas
+- 🚗 **Catastro de vehículos** - Gestión completa del inventario
+- 👥 **Gestión de clientes** - Base de datos de clientes
+- 💰 **Ventas con múltiples formas de pago** - Efectivo, transferencia, cheque, cambio
+- 📊 **Financiamiento con cuotas** - Control de pagos a plazos
+- 💳 **Control de deudas y pagos** - Seguimiento de saldos pendientes
+- 🏦 **Cuentas corrientes** - Gestión financiera
+- 📈 **Dashboard con estadísticas** - Reportes y métricas
 
-## Tecnologías
+## 🌐 **Aplicación en Vivo**
 
-- **Backend**: Flask (Python)
+**URL de la aplicación:** [https://playaventavehiculos-production.up.railway.app](https://playaventavehiculos-production.up.railway.app)
+
+## 🛠️ Tecnologías
+
+- **Backend**: Flask (Python 3.11)
 - **Base de datos**: PostgreSQL
 - **Frontend**: HTML, CSS (Bootstrap), JavaScript
 - **Despliegue**: Railway
+- **Servidor**: Gunicorn
 
-## Instalación Local
+## 📦 Instalación Local
 
-1. Clonar el repositorio
-2. Instalar dependencias: `pip install -r requirements.txt`
-3. Configurar variables de entorno para la base de datos
-4. Ejecutar: `python app.py`
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/Cristian2510/PlayaVentaVehiculos.git
+   cd PlayaVentaVehiculos
+   ```
 
-## Despliegue en Railway
+2. **Instalar dependencias:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-El proyecto está configurado para desplegarse automáticamente en Railway. Solo necesitas:
+3. **Configurar base de datos:**
+   - Crear base de datos PostgreSQL
+   - Configurar variable `DATABASE_URL`
 
-1. Conectar tu repositorio de GitHub a Railway
-2. Railway detectará automáticamente que es una aplicación Python
-3. Se desplegará automáticamente con la base de datos PostgreSQL
+4. **Ejecutar la aplicación:**
+   ```bash
+   python app.py
+   ```
 
-## Variables de Entorno
+## 🚀 Despliegue en Railway
 
-- `DATABASE_URL`: URL de conexión a PostgreSQL (proporcionada por Railway)
-- `PORT`: Puerto de la aplicación (proporcionado por Railway)
+El proyecto está **ya desplegado** en Railway y configurado para actualizaciones automáticas:
+
+### ✅ **Estado Actual:**
+- ✅ Aplicación desplegada exitosamente
+- ✅ Base de datos PostgreSQL conectada
+- ✅ Despliegue automático desde GitHub
+
+### 🔄 **Actualizaciones:**
+Cada vez que hagas `git push` a GitHub, Railway automáticamente:
+1. Detecta los cambios
+2. Reconstruye la aplicación
+3. Despliega la nueva versión
+
+## 🔧 Variables de Entorno
+
+Railway configura automáticamente:
+- `DATABASE_URL`: URL de conexión a PostgreSQL
+- `PORT`: Puerto de la aplicación
+- `RAILWAY_ENVIRONMENT`: Entorno de despliegue
+
+## 📁 Estructura del Proyecto
+
+```
+PlayaVentaVehiculos/
+├── app.py                 # Aplicación principal Flask
+├── requirements.txt       # Dependencias Python
+├── Procfile             # Configuración para Railway
+├── railway.json         # Configuración Railway
+├── database_setup.py    # Script de configuración DB
+├── init_db.py          # Inicialización de tablas
+├── templates/           # Plantillas HTML
+└── README.md           # Este archivo
+```
