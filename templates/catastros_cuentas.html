@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+
+{% block title %}Catastro de Cuentas Corrientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1"><i class="fas fa-credit-card me-2"></i>Catastro de Cuentas Corrientes</h3>
+            <p class="text-muted mb-0">Gestión de cuentas para movimientos financieros</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" onclick="mostrarModalNuevaCuenta()">
+                <i class="fas fa-plus me-2"></i>Nueva Cuenta
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Buscar cuenta..." onkeyup="filtrarCuentas()">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filtroMoneda" onchange="filtrarCuentas()">
+                        <option value="">Todas las monedas</option>
+                        <option value="1">Guaraníes</option>
+                        <option value="2">Dólares</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filtroTipo" onchange="filtrarCuentas()">
+                        <option value="">Todos los tipos</option>
+                        <option value="1">Efectivo</option>
+                        <option value="2">Banco</option>
+                        <option value="3">Cheque</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filtroEstado" onchange="filtrarCuentas()">
+                        <option value="">Todos los estados</option>
+                        <option value="1">Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
+                        <i class="fas fa-times me-1"></i>Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de cuentas -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-2">
+            <h6 class="mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Cuentas Corrientes
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 80px;">ID</th>
+                            <th style="width: 300px;">Descripción</th>
+                            <th class="text-center" style="width: 120px;">Moneda</th>
+                            <th class="text-center" style="width: 150px;">Tipo</th>
+                            <th class="text-center" style="width: 100px;">Estado</th>
+                            <th class="text-center" style="width: 120px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuentasTableBody">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Cuenta -->
+<div class="modal fade" id="nuevaCuentaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nueva Cuenta Corriente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevaCuentaForm">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Descripción de la Cuenta *</label>
+                            <input type="text" class="form-control" name="descripcion" placeholder="Ej: Banco Nacional - Cuenta Corriente" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Moneda *</label>
+                            <select class="form-select" name="moneda" required onchange="actualizarMonedaDesc()">
+                                <option value="">Seleccionar moneda...</option>
+                                <option value="1">Guaraníes</option>
+                                <option value="2">Dólares</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Tipo de Cuenta *</label>
+                            <select class="form-select" name="tipo_cuenta" required onchange="actualizarTipoDesc()">
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="1">Efectivo</option>
+                                <option value="2">Banco</option>
+                                <option value="3">Cheque</option>
+                                <option value="4">Crédito</option>
+                                <option value="5">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="moneda_desc" id="monedaDesc">
+                    <input type="hidden" name="tipo_descripcion" id="tipoDescripcion">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="guardarCuenta()">
+                    <i class="fas fa-save me-2"></i>Guardar Cuenta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Cuenta -->
+<div class="modal fade" id="editarCuentaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Cuenta Corriente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editarCuentaForm">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Descripción de la Cuenta *</label>
+                            <input type="text" class="form-control" name="descripcion" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Moneda *</label>
+                            <select class="form-select" name="moneda" required onchange="actualizarMonedaDescEdit()">
+                                <option value="1">Guaraníes</option>
+                                <option value="2">Dólares</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Tipo de Cuenta *</label>
+                            <select class="form-select" name="tipo_cuenta" required onchange="actualizarTipoDescEdit()">
+                                <option value="1">Efectivo</option>
+                                <option value="2">Banco</option>
+                                <option value="3">Cheque</option>
+                                <option value="4">Crédito</option>
+                                <option value="5">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Estado</label>
+                            <select class="form-select" name="activo">
+                                <option value="1">Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="moneda_desc" id="monedaDescEdit">
+                    <input type="hidden" name="tipo_descripcion" id="tipoDescripcionEdit">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="actualizarCuenta()">
+                    <i class="fas fa-save me-2"></i>Actualizar Cuenta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cuentas = [];
+    let cuentaEditando = null;
+
+    // Cargar cuentas al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCuentas();
+    });
+
+    // Función para cargar cuentas
+    async function loadCuentas() {
+        try {
+            const response = await fetch('/api/cuentas-corrientes');
+            cuentas = await response.json();
+            renderCuentas(cuentas);
+        } catch (error) {
+            console.error('Error cargando cuentas:', error);
+        }
+    }
+
+    // Función para renderizar la tabla de cuentas
+    function renderCuentas(cuentasData) {
+        const tbody = document.getElementById('cuentasTableBody');
+        tbody.innerHTML = '';
+
+        if (cuentasData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                        No hay cuentas registradas
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        cuentasData.forEach(cuenta => {
+            const estadoBadge = cuenta.activo ? 
+                '<span class="badge bg-success">Activo</span>' : 
+                '<span class="badge bg-secondary">Inactivo</span>';
+
+            const monedaBadge = cuenta.moneda === 1 ? 
+                '<span class="badge bg-primary">Guaraníes</span>' : 
+                '<span class="badge bg-info">Dólares</span>';
+
+            const tipoBadge = getTipoBadge(cuenta.tipo_cuenta);
+
+            tbody.innerHTML += `
+                <tr>
+                    <td class="text-center fw-bold">${cuenta.registro}</td>
+                    <td>${cuenta.descripcion}</td>
+                    <td class="text-center">${monedaBadge}</td>
+                    <td class="text-center">${tipoBadge}</td>
+                    <td class="text-center">${estadoBadge}</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="editarCuenta(${cuenta.registro})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarCuenta(${cuenta.registro})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function getTipoBadge(tipo) {
+        switch(tipo) {
+            case 1: return '<span class="badge bg-success">Efectivo</span>';
+            case 2: return '<span class="badge bg-info">Banco</span>';
+            case 3: return '<span class="badge bg-warning">Cheque</span>';
+            case 4: return '<span class="badge bg-secondary">Crédito</span>';
+            case 5: return '<span class="badge bg-dark">Otro</span>';
+            default: return '<span class="badge bg-light">Sin tipo</span>';
+        }
+    }
+
+    // Función para mostrar modal de nueva cuenta
+    function mostrarModalNuevaCuenta() {
+        document.getElementById('nuevaCuentaForm').reset();
+        const modal = new bootstrap.Modal(document.getElementById('nuevaCuentaModal'));
+        modal.show();
+    }
+
+    // Funciones para actualizar descripciones automáticas
+    function actualizarMonedaDesc() {
+        const moneda = document.querySelector('#nuevaCuentaForm select[name="moneda"]').value;
+        const monedaDesc = moneda === '1' ? 'Guaraníes' : 'Dólares';
+        document.getElementById('monedaDesc').value = monedaDesc;
+    }
+
+    function actualizarTipoDesc() {
+        const tipo = document.querySelector('#nuevaCuentaForm select[name="tipo_cuenta"]').value;
+        const tipos = {
+            '1': 'Efectivo',
+            '2': 'Banco',
+            '3': 'Cheque',
+            '4': 'Crédito',
+            '5': 'Otro'
+        };
+        document.getElementById('tipoDescripcion').value = tipos[tipo] || '';
+    }
+
+    function actualizarMonedaDescEdit() {
+        const moneda = document.querySelector('#editarCuentaForm select[name="moneda"]').value;
+        const monedaDesc = moneda === '1' ? 'Guaraníes' : 'Dólares';
+        document.getElementById('monedaDescEdit').value = monedaDesc;
+    }
+
+    function actualizarTipoDescEdit() {
+        const tipo = document.querySelector('#editarCuentaForm select[name="tipo_cuenta"]').value;
+        const tipos = {
+            '1': 'Efectivo',
+            '2': 'Banco',
+            '3': 'Cheque',
+            '4': 'Crédito',
+            '5': 'Otro'
+        };
+        document.getElementById('tipoDescripcionEdit').value = tipos[tipo] || '';
+    }
+
+    // Función para guardar nueva cuenta
+    async function guardarCuenta() {
+        const form = document.getElementById('nuevaCuentaForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        if (!data.descripcion || !data.moneda || !data.tipo_cuenta) {
+            alert('Todos los campos marcados con * son obligatorios');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/cuentas-corrientes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('nuevaCuentaModal')).hide();
+                form.reset();
+                loadCuentas();
+                alert('Cuenta creada exitosamente');
+            } else {
+                alert('Error al crear la cuenta: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al guardar la cuenta');
+        }
+    }
+
+    // Función para editar cuenta
+    async function editarCuenta(cuentaId) {
+        try {
+            const response = await fetch(`/api/cuentas-corrientes/${cuentaId}`);
+            const cuenta = await response.json();
+            
+            cuentaEditando = cuentaId;
+            
+            // Llenar el formulario de edición
+            const form = document.getElementById('editarCuentaForm');
+            form.querySelector('input[name="descripcion"]').value = cuenta.descripcion;
+            form.querySelector('select[name="moneda"]').value = cuenta.moneda;
+            form.querySelector('select[name="tipo_cuenta"]').value = cuenta.tipo_cuenta;
+            form.querySelector('select[name="activo"]').value = cuenta.activo;
+            
+            // Actualizar campos ocultos
+            document.getElementById('monedaDescEdit').value = cuenta.moneda_desc;
+            document.getElementById('tipoDescripcionEdit').value = cuenta.tipo_descripcion;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editarCuentaModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al cargar los datos de la cuenta');
+        }
+    }
+
+    // Función para actualizar cuenta
+    async function actualizarCuenta() {
+        if (!cuentaEditando) return;
+
+        const form = document.getElementById('editarCuentaForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch(`/api/cuentas-corrientes/${cuentaEditando}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editarCuentaModal')).hide();
+                loadCuentas();
+                alert('Cuenta actualizada exitosamente');
+            } else {
+                alert('Error al actualizar la cuenta: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al actualizar la cuenta');
+        }
+    }
+
+    // Función para eliminar cuenta
+    async function eliminarCuenta(cuentaId) {
+        if (!confirm('¿Está seguro de que desea eliminar esta cuenta? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/cuentas-corrientes/${cuentaId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                loadCuentas();
+                alert('Cuenta eliminada exitosamente');
+            } else {
+                alert('Error al eliminar la cuenta: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al eliminar la cuenta');
+        }
+    }
+
+    // Función para filtrar cuentas
+    function filtrarCuentas() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filtroMoneda = document.getElementById('filtroMoneda').value;
+        const filtroTipo = document.getElementById('filtroTipo').value;
+        const filtroEstado = document.getElementById('filtroEstado').value;
+
+        const cuentasFiltradas = cuentas.filter(cuenta => {
+            const matchSearch = cuenta.descripcion.toLowerCase().includes(searchTerm);
+            const matchMoneda = !filtroMoneda || cuenta.moneda.toString() === filtroMoneda;
+            const matchTipo = !filtroTipo || cuenta.tipo_cuenta.toString() === filtroTipo;
+            const matchEstado = !filtroEstado || cuenta.activo.toString() === filtroEstado;
+
+            return matchSearch && matchMoneda && matchTipo && matchEstado;
+        });
+
+        renderCuentas(cuentasFiltradas);
+    }
+
+    // Función para limpiar filtros
+    function limpiarFiltros() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filtroMoneda').value = '';
+        document.getElementById('filtroTipo').value = '';
+        document.getElementById('filtroEstado').value = '';
+        renderCuentas(cuentas);
+    }
+</script>
+
+{% endblock %}

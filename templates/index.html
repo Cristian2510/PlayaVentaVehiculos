@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Sistema de Gestión de Vehículos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h1 class="display-4 fw-bold text-primary mb-3">
+                        <i class="fas fa-car me-3"></i>
+                        Bienvenido a la Plataforma
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Sistema Integral de Gestión de Vehículos para Paraguay
+                    </p>
+                    <p class="text-muted">
+                        Seleccione una opción del menú para comenzar.
+                    </p>
+                    <div class="alert alert-info mt-3" style="max-width: 600px; margin: 0 auto;">
+                        <h6><i class="fas fa-keyboard me-2"></i>Navegación Mejorada</h6>
+                        <p class="mb-2"><strong>Enter:</strong> Navegar entre campos (como Tab)</p>
+                        <p class="mb-2"><strong>Ctrl+Enter:</strong> Guardar formulario en modales</p>
+                        <p class="mb-0"><strong>Escape:</strong> Cerrar modales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="totalVehiculos">0</h3>
+                        <p>Vehículos Registrados</p>
+                    </div>
+                    <i class="fas fa-car fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="totalVentas">0</h3>
+                        <p>Ventas Realizadas</p>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="totalClientes">0</h3>
+                        <p>Clientes Registrados</p>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="totalGastos">0</h3>
+                        <p>Gastos del Mes</p>
+                    </div>
+                    <i class="fas fa-receipt fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-primary w-100 py-3" onclick="openModal('nuevoVehiculoModal')">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Nuevo Vehículo
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-success w-100 py-3" onclick="openModal('nuevaVentaModal')">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Nueva Venta
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-warning w-100 py-3" onclick="openModal('nuevoClienteModal')">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Nuevo Cliente
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-info w-100 py-3" onclick="openModal('nuevoGastoModal')">
+                                <i class="fas fa-receipt me-2"></i>
+                                Nuevo Gasto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Actividad Reciente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Actividad</th>
+                                    <th>Detalle</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityTable">
+                                <!-- Se llenará dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Resumen Financiero</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Ingresos del Mes</span>
+                            <span class="text-success fw-bold" id="ingresosMes">₲ 0</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="ingresosProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Gastos del Mes</span>
+                            <span class="text-danger fw-bold" id="gastosMes">₲ 0</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger" id="gastosProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Utilidad</span>
+                            <span class="text-primary fw-bold" id="utilidadMes">₲ 0</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary" id="utilidadProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Vehículo -->
+<div class="modal fade" id="nuevoVehiculoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-car me-2"></i>Nuevo Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoVehiculoForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marca *</label>
+                            <input type="text" class="form-control" name="marca" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Modelo *</label>
+                            <input type="text" class="form-control" name="modelo" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Año *</label>
+                            <input type="number" class="form-control" name="año" min="1900" max="2030" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Color *</label>
+                            <input type="text" class="form-control" name="color" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tipo de Vehículo</label>
+                            <select class="form-select" name="tipo_vehiculo">
+                                <option value="">Seleccionar...</option>
+                                <option value="Automóvil">Automóvil</option>
+                                <option value="Camioneta">Camioneta</option>
+                                <option value="Camión">Camión</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Chasis *</label>
+                            <input type="text" class="form-control" name="chasis" maxlength="17" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Motor *</label>
+                            <input type="text" class="form-control" name="motor" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" name="placa" maxlength="10">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Kilometraje</label>
+                            <input type="number" class="form-control" name="kilometraje" min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Combustible</label>
+                            <select class="form-select" name="combustible">
+                                <option value="">Seleccionar...</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Precio de Compra *</label>
+                            <input type="number" class="form-control" name="precio_compra" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transmisión</label>
+                            <select class="form-select" name="transmision">
+                                <option value="">Seleccionar...</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automático">Automático</option>
+                                <option value="CVT">CVT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarVehiculo()">
+                    <i class="fas fa-save me-2"></i>Guardar Vehículo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Venta -->
+<div class="modal fade" id="nuevaVentaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-shopping-cart me-2"></i>Nueva Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevaVentaForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Vehículo *</label>
+                            <select class="form-select" name="vehiculo_id" required>
+                                <option value="">Seleccionar vehículo...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Cliente *</label>
+                            <select class="form-select" name="cliente_id" required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Precio de Venta *</label>
+                            <input type="number" class="form-control" name="precio_venta" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Forma de Pago</label>
+                            <select class="form-select" name="forma_pago">
+                                <option value="Contado">Contado</option>
+                                <option value="Crédito">Crédito</option>
+                                <option value="Financiamiento">Financiamiento</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="guardarVenta()">
+                    <i class="fas fa-save me-2"></i>Guardar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Cliente -->
+<div class="modal fade" id="nuevoClienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoClienteForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" name="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Apellido *</label>
+                            <input type="text" class="form-control" name="apellido" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Cédula *</label>
+                            <input type="text" class="form-control" name="cedula" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" name="telefono">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <textarea class="form-control" name="direccion" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="guardarCliente()">
+                    <i class="fas fa-save me-2"></i>Guardar Cliente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Gasto -->
+<div class="modal fade" id="nuevoGastoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Nuevo Gasto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoGastoForm">
+                    <div class="mb-3">
+                        <label class="form-label">Concepto *</label>
+                        <input type="text" class="form-control" name="concepto" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monto *</label>
+                            <input type="number" class="form-control" name="monto" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" name="categoria">
+                                <option value="">Seleccionar...</option>
+                                <option value="Combustible">Combustible</option>
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Impuestos">Impuestos</option>
+                                <option value="Seguros">Seguros</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Forma de Pago</label>
+                            <select class="form-select" name="forma_pago">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" name="estado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Pagado">Pagado</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="guardarGasto()">
+                    <i class="fas fa-save me-2"></i>Guardar Gasto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let vehiculos = [];
+let clientes = [];
+
+// Función para abrir modales
+function openModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+// Cargar datos de estadísticas
+async function loadDashboardData() {
+    try {
+        // Cargar vehículos
+        const vehiculosResponse = await fetch('/api/vehiculos');
+        vehiculos = await vehiculosResponse.json();
+        document.getElementById('totalVehiculos').textContent = vehiculos.length;
+
+        // Cargar clientes
+        const clientesResponse = await fetch('/api/clientes');
+        clientes = await clientesResponse.json();
+        document.getElementById('totalClientes').textContent = clientes.length;
+
+        // Cargar ventas
+        const ventasResponse = await fetch('/api/ventas');
+        const ventas = await ventasResponse.json();
+        document.getElementById('totalVentas').textContent = ventas.length;
+
+        // Cargar gastos
+        const gastosResponse = await fetch('/api/gastos');
+        const gastos = await gastosResponse.json();
+        document.getElementById('totalGastos').textContent = gastos.length;
+
+        // Actualizar selectores de modales
+        updateModalSelectors();
+
+    } catch (error) {
+        console.error('Error cargando datos del dashboard:', error);
+    }
+}
+
+// Actualizar selectores de modales
+function updateModalSelectors() {
+    // Selector de vehículos en modal de venta
+    const vehiculoSelect = document.querySelector('#nuevaVentaModal select[name="vehiculo_id"]');
+    vehiculoSelect.innerHTML = '<option value="">Seleccionar vehículo...</option>';
+    vehiculos.forEach(vehiculo => {
+        if (vehiculo.estado === 'Disponible') {
+            vehiculoSelect.innerHTML += `<option value="${vehiculo.id}">${vehiculo.marca} ${vehiculo.modelo} - ${vehiculo.año}</option>`;
+        }
+    });
+
+    // Selector de clientes en modal de venta
+    const clienteSelect = document.querySelector('#nuevaVentaModal select[name="cliente_id"]');
+    clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
+    clientes.forEach(cliente => {
+        clienteSelect.innerHTML += `<option value="${cliente.id}">${cliente.nombre} ${cliente.apellido} - ${cliente.cedula}</option>`;
+    });
+}
+
+// Guardar vehículo
+async function guardarVehiculo() {
+    const form = document.getElementById('nuevoVehiculoForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/vehiculos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Vehículo guardado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoVehiculoModal')).hide();
+            form.reset();
+            loadDashboardData();
+        } else {
+            alert('Error al guardar el vehículo');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el vehículo');
+    }
+}
+
+// Guardar venta
+async function guardarVenta() {
+    const form = document.getElementById('nuevaVentaForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/ventas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Venta registrada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevaVentaModal')).hide();
+            form.reset();
+            loadDashboardData();
+        } else {
+            alert('Error al registrar la venta');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar la venta');
+    }
+}
+
+// Guardar cliente
+async function guardarCliente() {
+    const form = document.getElementById('nuevoClienteForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/clientes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Cliente guardado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoClienteModal')).hide();
+            form.reset();
+            loadDashboardData();
+        } else {
+            alert('Error al guardar el cliente');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el cliente');
+    }
+}
+
+// Guardar gasto
+async function guardarGasto() {
+    const form = document.getElementById('nuevoGastoForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/gastos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Gasto registrado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoGastoModal')).hide();
+            form.reset();
+            loadDashboardData();
+        } else {
+            alert('Error al registrar el gasto');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar el gasto');
+    }
+}
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+
+{% block title %}Facturación - Gestión de Documentos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Gestión de Facturación</h5>
+                        <div>
+                            <button class="btn btn-success me-2" onclick="openModal('nuevaFacturaModal')">
+                                <i class="fas fa-plus me-2"></i>Nueva Factura
+                            </button>
+                            <button class="btn btn-warning me-2" onclick="openModal('nuevoPagareModal')">
+                                <i class="fas fa-file-contract me-2"></i>Nuevo Pagaré
+                            </button>
+                            <button class="btn btn-info" onclick="openModal('nuevoContratoModal')">
+                                <i class="fas fa-file-signature me-2"></i>Nuevo Contrato
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="facturacionTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="facturas-tab" data-bs-toggle="tab" data-bs-target="#facturas" type="button" role="tab">
+                                <i class="fas fa-receipt me-2"></i>Facturas
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pagares-tab" data-bs-toggle="tab" data-bs-target="#pagares" type="button" role="tab">
+                                <i class="fas fa-file-contract me-2"></i>Pagarés
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="contratos-tab" data-bs-toggle="tab" data-bs-target="#contratos" type="button" role="tab">
+                                <i class="fas fa-file-signature me-2"></i>Contratos
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="facturacionTabContent">
+        <!-- Facturas Tab -->
+        <div class="tab-pane fade show active" id="facturas" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Factura</th>
+                                            <th>Fecha</th>
+                                            <th>Cliente</th>
+                                            <th>Vehículo</th>
+                                            <th>Monto Total</th>
+                                            <th>IVA</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="facturasTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagarés Tab -->
+        <div class="tab-pane fade" id="pagares" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Pagaré</th>
+                                            <th>Fecha Emisión</th>
+                                            <th>Vencimiento</th>
+                                            <th>Cliente</th>
+                                            <th>Vehículo</th>
+                                            <th>Monto</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pagaresTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contratos Tab -->
+        <div class="tab-pane fade" id="contratos" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Contrato</th>
+                                            <th>Fecha</th>
+                                            <th>Tipo</th>
+                                            <th>Cliente</th>
+                                            <th>Vehículo</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="contratosTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Factura -->
+<div class="modal fade" id="nuevaFacturaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Nueva Factura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevaFacturaForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Venta *</label>
+                            <select class="form-select" name="venta_id" required>
+                                <option value="">Seleccionar venta...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Factura *</label>
+                            <input type="text" class="form-control" name="numero_factura" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha de Emisión</label>
+                            <input type="date" class="form-control" name="fecha_emision" value="{{ today }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">IVA (%)</label>
+                            <input type="number" class="form-control" name="iva" value="10" min="0" max="100" step="0.01">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="guardarFactura()">
+                    <i class="fas fa-save me-2"></i>Generar Factura
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Pagaré -->
+<div class="modal fade" id="nuevoPagareModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-contract me-2"></i>Nuevo Pagaré</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoPagareForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Venta *</label>
+                            <select class="form-select" name="venta_id" required>
+                                <option value="">Seleccionar venta...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Pagaré *</label>
+                            <input type="text" class="form-control" name="numero_pagare" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monto *</label>
+                            <input type="number" class="form-control" name="monto" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha de Vencimiento *</label>
+                            <input type="date" class="form-control" name="fecha_vencimiento" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="guardarPagare()">
+                    <i class="fas fa-save me-2"></i>Generar Pagaré
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Contrato -->
+<div class="modal fade" id="nuevoContratoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-signature me-2"></i>Nuevo Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoContratoForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Venta *</label>
+                            <select class="form-select" name="venta_id" required>
+                                <option value="">Seleccionar venta...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Contrato *</label>
+                            <input type="text" class="form-control" name="numero_contrato" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo de Contrato</label>
+                            <select class="form-select" name="tipo_contrato">
+                                <option value="Compraventa">Compraventa</option>
+                                <option value="Leasing">Leasing</option>
+                                <option value="Financiamiento">Financiamiento</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha del Contrato</label>
+                            <input type="date" class="form-control" name="fecha_contrato" value="{{ today }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Términos y Condiciones</label>
+                        <textarea class="form-control" name="terminos" rows="5" placeholder="Ingrese los términos y condiciones del contrato..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="guardarContrato()">
+                    <i class="fas fa-save me-2"></i>Generar Contrato
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Factura -->
+<div class="modal fade" id="verFacturaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Detalles de Factura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información de la Factura</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>N° Factura:</strong></td><td id="facturaNumero"></td></tr>
+                            <tr><td><strong>Fecha:</strong></td><td id="facturaFecha"></td></tr>
+                            <tr><td><strong>Estado:</strong></td><td id="facturaEstado"></td></tr>
+                            <tr><td><strong>IVA:</strong></td><td id="facturaIva"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Información del Cliente</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Cliente:</strong></td><td id="facturaCliente"></td></tr>
+                            <tr><td><strong>Vehículo:</strong></td><td id="facturaVehiculo"></td></tr>
+                            <tr><td><strong>Monto Total:</strong></td><td id="facturaMonto"></td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirFactura()">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let facturas = [];
+let pagares = [];
+let contratos = [];
+let ventas = [];
+
+// Cargar datos
+async function loadFacturacionData() {
+    try {
+        // Cargar ventas
+        const ventasResponse = await fetch('/api/ventas');
+        ventas = await ventasResponse.json();
+
+        // Cargar facturas
+        const facturasResponse = await fetch('/api/facturas');
+        facturas = await facturasResponse.json();
+
+        // Cargar pagarés
+        const pagaresResponse = await fetch('/api/pagares');
+        pagares = await pagaresResponse.json();
+
+        // Cargar contratos
+        const contratosResponse = await fetch('/api/contratos');
+        contratos = await contratosResponse.json();
+
+        renderFacturas();
+        renderPagares();
+        renderContratos();
+        updateModalSelectors();
+
+    } catch (error) {
+        console.error('Error cargando datos de facturación:', error);
+    }
+}
+
+// Renderizar facturas
+function renderFacturas() {
+    const tbody = document.getElementById('facturasTableBody');
+    tbody.innerHTML = '';
+
+    facturas.forEach(factura => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${factura.numero_factura}</td>
+            <td>${factura.fecha_emision}</td>
+            <td>${factura.cliente_nombre || 'N/A'}</td>
+            <td>${factura.vehiculo_info || 'N/A'}</td>
+            <td>₲ ${factura.monto_total?.toLocaleString() || '0'}</td>
+            <td>${factura.iva || '10'}%</td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(factura.estado)}">
+                    ${factura.estado}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="verFactura(${factura.id})" title="Ver factura">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="imprimirFactura(${factura.id})" title="Imprimir">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarFactura(${factura.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Renderizar pagarés
+function renderPagares() {
+    const tbody = document.getElementById('pagaresTableBody');
+    tbody.innerHTML = '';
+
+    pagares.forEach(pagare => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${pagare.numero_pagare}</td>
+            <td>${pagare.fecha_emision}</td>
+            <td>${pagare.fecha_vencimiento}</td>
+            <td>${pagare.cliente_nombre || 'N/A'}</td>
+            <td>${pagare.vehiculo_info || 'N/A'}</td>
+            <td>₲ ${pagare.monto?.toLocaleString() || '0'}</td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(pagare.estado)}">
+                    ${pagare.estado}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="verPagare(${pagare.id})" title="Ver pagaré">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="imprimirPagare(${pagare.id})" title="Imprimir">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarPagare(${pagare.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Renderizar contratos
+function renderContratos() {
+    const tbody = document.getElementById('contratosTableBody');
+    tbody.innerHTML = '';
+
+    contratos.forEach(contrato => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${contrato.numero_contrato}</td>
+            <td>${contrato.fecha_contrato}</td>
+            <td>${contrato.tipo_contrato}</td>
+            <td>${contrato.cliente_nombre || 'N/A'}</td>
+            <td>${contrato.vehiculo_info || 'N/A'}</td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(contrato.estado)}">
+                    ${contrato.estado}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="verContrato(${contrato.id})" title="Ver contrato">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="imprimirContrato(${contrato.id})" title="Imprimir">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarContrato(${contrato.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Obtener clase de badge según estado
+function getEstadoBadgeClass(estado) {
+    switch(estado) {
+        case 'Emitida':
+        case 'Activo':
+        case 'Pendiente': return 'badge-warning';
+        case 'Pagado': return 'badge-success';
+        case 'Vencido': return 'badge-danger';
+        default: return 'badge-secondary';
+    }
+}
+
+// Actualizar selectores de modales
+function updateModalSelectors() {
+    // Selector de ventas en modal de factura
+    const facturaVentaSelect = document.querySelector('#nuevaFacturaModal select[name="venta_id"]');
+    facturaVentaSelect.innerHTML = '<option value="">Seleccionar venta...</option>';
+    ventas.forEach(venta => {
+        facturaVentaSelect.innerHTML += `<option value="${venta.id}">${venta.cliente_nombre} - ${venta.vehiculo_marca} ${venta.vehiculo_modelo}</option>`;
+    });
+
+    // Selector de ventas en modal de pagaré
+    const pagareVentaSelect = document.querySelector('#nuevoPagareModal select[name="venta_id"]');
+    pagareVentaSelect.innerHTML = '<option value="">Seleccionar venta...</option>';
+    ventas.forEach(venta => {
+        pagareVentaSelect.innerHTML += `<option value="${venta.id}">${venta.cliente_nombre} - ${venta.vehiculo_marca} ${venta.vehiculo_modelo}</option>`;
+    });
+
+    // Selector de ventas en modal de contrato
+    const contratoVentaSelect = document.querySelector('#nuevoContratoModal select[name="venta_id"]');
+    contratoVentaSelect.innerHTML = '<option value="">Seleccionar venta...</option>';
+    ventas.forEach(venta => {
+        contratoVentaSelect.innerHTML += `<option value="${venta.id}">${venta.cliente_nombre} - ${venta.vehiculo_marca} ${venta.vehiculo_modelo}</option>`;
+    });
+}
+
+// Abrir modal
+function openModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+// Guardar factura
+async function guardarFactura() {
+    const form = document.getElementById('nuevaFacturaForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/facturas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Factura generada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevaFacturaModal')).hide();
+            form.reset();
+            loadFacturacionData();
+        } else {
+            alert('Error al generar la factura');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar la factura');
+    }
+}
+
+// Guardar pagaré
+async function guardarPagare() {
+    const form = document.getElementById('nuevoPagareForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/pagares', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Pagaré generado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoPagareModal')).hide();
+            form.reset();
+            loadFacturacionData();
+        } else {
+            alert('Error al generar el pagaré');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar el pagaré');
+    }
+}
+
+// Guardar contrato
+async function guardarContrato() {
+    const form = document.getElementById('nuevoContratoForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/contratos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Contrato generado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoContratoModal')).hide();
+            form.reset();
+            loadFacturacionData();
+        } else {
+            alert('Error al generar el contrato');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar el contrato');
+    }
+}
+
+// Ver factura
+function verFactura(id) {
+    const factura = facturas.find(f => f.id === id);
+    if (!factura) return;
+
+    // Llenar detalles
+    document.getElementById('facturaNumero').textContent = factura.numero_factura;
+    document.getElementById('facturaFecha').textContent = factura.fecha_emision;
+    document.getElementById('facturaEstado').textContent = factura.estado;
+    document.getElementById('facturaIva').textContent = `${factura.iva || 10}%`;
+    document.getElementById('facturaCliente').textContent = factura.cliente_nombre || 'N/A';
+    document.getElementById('facturaVehiculo').textContent = factura.vehiculo_info || 'N/A';
+    document.getElementById('facturaMonto').textContent = `₲ ${factura.monto_total?.toLocaleString() || '0'}`;
+
+    openModal('verFacturaModal');
+}
+
+// Imprimir factura
+function imprimirFactura(id) {
+    // Implementar impresión
+    alert('Función de impresión en desarrollo');
+}
+
+// Eliminar factura
+async function eliminarFactura(id) {
+    if (!confirm('¿Está seguro de que desea eliminar esta factura?')) return;
+
+    try {
+        const response = await fetch(`/api/facturas/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Factura eliminada exitosamente');
+            loadFacturacionData();
+        } else {
+            alert('Error al eliminar la factura');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar la factura');
+    }
+}
+
+// Funciones similares para pagarés y contratos
+function verPagare(id) {
+    // Implementar vista de pagaré
+    alert('Función en desarrollo');
+}
+
+function imprimirPagare(id) {
+    // Implementar impresión de pagaré
+    alert('Función de impresión en desarrollo');
+}
+
+async function eliminarPagare(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este pagaré?')) return;
+
+    try {
+        const response = await fetch(`/api/pagares/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Pagaré eliminado exitosamente');
+            loadFacturacionData();
+        } else {
+            alert('Error al eliminar el pagaré');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el pagaré');
+    }
+}
+
+function verContrato(id) {
+    // Implementar vista de contrato
+    alert('Función en desarrollo');
+}
+
+function imprimirContrato(id) {
+    // Implementar impresión de contrato
+    alert('Función de impresión en desarrollo');
+}
+
+async function eliminarContrato(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este contrato?')) return;
+
+    try {
+        const response = await fetch(`/api/contratos/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Contrato eliminado exitosamente');
+            loadFacturacionData();
+        } else {
+            alert('Error al eliminar el contrato');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el contrato');
+    }
+}
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadFacturacionData();
+});
+</script>
+{% endblock %} 

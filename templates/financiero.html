@@ -1,0 +1,740 @@
+{% extends "base.html" %}
+
+{% block title %}Financiero - Control de Caja y Gastos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Control Financiero</h5>
+                        <div>
+                            <button class="btn btn-success me-2" onclick="openModal('nuevoMovimientoCajaModal')">
+                                <i class="fas fa-plus me-2"></i>Nuevo Movimiento
+                            </button>
+                            <button class="btn btn-warning me-2" onclick="openModal('nuevoGastoModal')">
+                                <i class="fas fa-receipt me-2"></i>Nuevo Gasto
+                            </button>
+                            <button class="btn btn-info" onclick="openModal('nuevoProveedorModal')">
+                                <i class="fas fa-user-tie me-2"></i>Nuevo Proveedor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="saldoCaja">₲ 0</h3>
+                        <p>Saldo en Caja</p>
+                    </div>
+                    <i class="fas fa-cash-register fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="ingresosMes">₲ 0</h3>
+                        <p>Ingresos del Mes</p>
+                    </div>
+                    <i class="fas fa-arrow-up fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="gastosMes">₲ 0</h3>
+                        <p>Gastos del Mes</p>
+                    </div>
+                    <i class="fas fa-arrow-down fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="utilidadMes">₲ 0</h3>
+                        <p>Utilidad del Mes</p>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="financieroTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="caja-tab" data-bs-toggle="tab" data-bs-target="#caja" type="button" role="tab">
+                                <i class="fas fa-cash-register me-2"></i>Caja
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="banco-tab" data-bs-toggle="tab" data-bs-target="#banco" type="button" role="tab">
+                                <i class="fas fa-university me-2"></i>Banco
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="gastos-tab" data-bs-toggle="tab" data-bs-target="#gastos" type="button" role="tab">
+                                <i class="fas fa-receipt me-2"></i>Gastos
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="proveedores-tab" data-bs-toggle="tab" data-bs-target="#proveedores" type="button" role="tab">
+                                <i class="fas fa-user-tie me-2"></i>Proveedores
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="financieroTabContent">
+        <!-- Caja Tab -->
+        <div class="tab-pane fade show active" id="caja" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Tipo</th>
+                                            <th>Concepto</th>
+                                            <th>Monto</th>
+                                            <th>Saldo</th>
+                                            <th>Referencia</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cajaTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banco Tab -->
+        <div class="tab-pane fade" id="banco" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Tipo</th>
+                                            <th>Concepto</th>
+                                            <th>Monto</th>
+                                            <th>Saldo</th>
+                                            <th>Cuenta</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bancoTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gastos Tab -->
+        <div class="tab-pane fade" id="gastos" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Concepto</th>
+                                            <th>Categoría</th>
+                                            <th>Monto</th>
+                                            <th>Proveedor</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="gastosTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proveedores Tab -->
+        <div class="tab-pane fade" id="proveedores" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>RUC</th>
+                                            <th>Teléfono</th>
+                                            <th>Email</th>
+                                            <th>Dirección</th>
+                                            <th>Fecha Registro</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="proveedoresTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Movimiento Caja -->
+<div class="modal fade" id="nuevoMovimientoCajaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cash-register me-2"></i>Nuevo Movimiento de Caja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoMovimientoCajaForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo de Movimiento *</label>
+                            <select class="form-select" name="tipo_movimiento" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Ingreso">Ingreso</option>
+                                <option value="Egreso">Egreso</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monto *</label>
+                            <input type="number" class="form-control" name="monto" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Concepto *</label>
+                        <input type="text" class="form-control" name="concepto" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Referencia</label>
+                        <input type="text" class="form-control" name="referencia">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="guardarMovimientoCaja()">
+                    <i class="fas fa-save me-2"></i>Guardar Movimiento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Gasto -->
+<div class="modal fade" id="nuevoGastoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Nuevo Gasto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoGastoForm">
+                    <div class="mb-3">
+                        <label class="form-label">Concepto *</label>
+                        <input type="text" class="form-control" name="concepto" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monto *</label>
+                            <input type="number" class="form-control" name="monto" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" name="categoria">
+                                <option value="">Seleccionar...</option>
+                                <option value="Combustible">Combustible</option>
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Impuestos">Impuestos</option>
+                                <option value="Seguros">Seguros</option>
+                                <option value="Servicios">Servicios</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Proveedor</label>
+                            <select class="form-select" name="proveedor_id">
+                                <option value="">Seleccionar proveedor...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Forma de Pago</label>
+                            <select class="form-select" name="forma_pago">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Cheque">Cheque</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select" name="estado">
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Pagado">Pagado</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="guardarGasto()">
+                    <i class="fas fa-save me-2"></i>Guardar Gasto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Proveedor -->
+<div class="modal fade" id="nuevoProveedorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-tie me-2"></i>Nuevo Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoProveedorForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" name="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">RUC</label>
+                            <input type="text" class="form-control" name="ruc">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" name="telefono">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <textarea class="form-control" name="direccion" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="guardarProveedor()">
+                    <i class="fas fa-save me-2"></i>Guardar Proveedor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let movimientosCaja = [];
+let movimientosBanco = [];
+let gastos = [];
+let proveedores = [];
+
+// Cargar datos financieros
+async function loadFinancieroData() {
+    try {
+        // Cargar movimientos de caja
+        const cajaResponse = await fetch('/api/caja');
+        movimientosCaja = await cajaResponse.json();
+
+        // Cargar gastos
+        const gastosResponse = await fetch('/api/gastos');
+        gastos = await gastosResponse.json();
+
+        // Cargar proveedores
+        const proveedoresResponse = await fetch('/api/proveedores');
+        proveedores = await proveedoresResponse.json();
+
+        renderCaja();
+        renderGastos();
+        renderProveedores();
+        updateStatistics();
+        updateModalSelectors();
+
+    } catch (error) {
+        console.error('Error cargando datos financieros:', error);
+    }
+}
+
+// Renderizar movimientos de caja
+function renderCaja() {
+    const tbody = document.getElementById('cajaTableBody');
+    tbody.innerHTML = '';
+
+    movimientosCaja.forEach(movimiento => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${movimiento.fecha}</td>
+            <td>
+                <span class="badge ${movimiento.tipo_movimiento === 'Ingreso' ? 'badge-success' : 'badge-danger'}">
+                    ${movimiento.tipo_movimiento}
+                </span>
+            </td>
+            <td>${movimiento.concepto}</td>
+            <td>₲ ${movimiento.monto?.toLocaleString() || '0'}</td>
+            <td>₲ ${movimiento.saldo_actual?.toLocaleString() || '0'}</td>
+            <td>${movimiento.referencia || '-'}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-danger" onclick="eliminarMovimientoCaja(${movimiento.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Renderizar gastos
+function renderGastos() {
+    const tbody = document.getElementById('gastosTableBody');
+    tbody.innerHTML = '';
+
+    gastos.forEach(gasto => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${gasto.fecha}</td>
+            <td>${gasto.concepto}</td>
+            <td>${gasto.categoria || '-'}</td>
+            <td>₲ ${gasto.monto?.toLocaleString() || '0'}</td>
+            <td>${gasto.proveedor_nombre || '-'}</td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(gasto.estado)}">
+                    ${gasto.estado}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="verGasto(${gasto.id})" title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editarGasto(${gasto.id})" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarGasto(${gasto.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Renderizar proveedores
+function renderProveedores() {
+    const tbody = document.getElementById('proveedoresTableBody');
+    tbody.innerHTML = '';
+
+    proveedores.forEach(proveedor => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${proveedor.nombre}</td>
+            <td>${proveedor.ruc || '-'}</td>
+            <td>${proveedor.telefono || '-'}</td>
+            <td>${proveedor.email || '-'}</td>
+            <td>${proveedor.direccion || '-'}</td>
+            <td>${proveedor.fecha_registro}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-warning" onclick="editarProveedor(${proveedor.id})" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarProveedor(${proveedor.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Obtener clase de badge según estado
+function getEstadoBadgeClass(estado) {
+    switch(estado) {
+        case 'Pagado': return 'badge-success';
+        case 'Pendiente': return 'badge-warning';
+        default: return 'badge-secondary';
+    }
+}
+
+// Actualizar estadísticas
+function updateStatistics() {
+    // Calcular saldo de caja
+    const saldoCaja = movimientosCaja.reduce((total, mov) => {
+        return total + (mov.tipo_movimiento === 'Ingreso' ? mov.monto : -mov.monto);
+    }, 0);
+
+    // Calcular gastos del mes
+    const gastosMes = gastos.reduce((total, gasto) => total + gasto.monto, 0);
+
+    // Actualizar elementos
+    document.getElementById('saldoCaja').textContent = `₲ ${saldoCaja.toLocaleString()}`;
+    document.getElementById('gastosMes').textContent = `₲ ${gastosMes.toLocaleString()}`;
+    // Los ingresos y utilidad se calcularían con datos de ventas
+}
+
+// Actualizar selectores de modales
+function updateModalSelectors() {
+    // Selector de proveedores en modal de gasto
+    const proveedorSelect = document.querySelector('#nuevoGastoModal select[name="proveedor_id"]');
+    proveedorSelect.innerHTML = '<option value="">Seleccionar proveedor...</option>';
+    proveedores.forEach(proveedor => {
+        proveedorSelect.innerHTML += `<option value="${proveedor.id}">${proveedor.nombre}</option>`;
+    });
+}
+
+// Abrir modal
+function openModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+// Guardar movimiento de caja
+async function guardarMovimientoCaja() {
+    const form = document.getElementById('nuevoMovimientoCajaForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/caja', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Movimiento registrado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoMovimientoCajaModal')).hide();
+            form.reset();
+            loadFinancieroData();
+        } else {
+            alert('Error al registrar el movimiento');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar el movimiento');
+    }
+}
+
+// Guardar gasto
+async function guardarGasto() {
+    const form = document.getElementById('nuevoGastoForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/gastos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Gasto registrado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoGastoModal')).hide();
+            form.reset();
+            loadFinancieroData();
+        } else {
+            alert('Error al registrar el gasto');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar el gasto');
+    }
+}
+
+// Guardar proveedor
+async function guardarProveedor() {
+    const form = document.getElementById('nuevoProveedorForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/proveedores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Proveedor registrado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoProveedorModal')).hide();
+            form.reset();
+            loadFinancieroData();
+        } else {
+            alert('Error al registrar el proveedor');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar el proveedor');
+    }
+}
+
+// Eliminar movimiento de caja
+async function eliminarMovimientoCaja(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este movimiento?')) return;
+
+    try {
+        const response = await fetch(`/api/caja/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Movimiento eliminado exitosamente');
+            loadFinancieroData();
+        } else {
+            alert('Error al eliminar el movimiento');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el movimiento');
+    }
+}
+
+// Eliminar gasto
+async function eliminarGasto(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este gasto?')) return;
+
+    try {
+        const response = await fetch(`/api/gastos/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Gasto eliminado exitosamente');
+            loadFinancieroData();
+        } else {
+            alert('Error al eliminar el gasto');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el gasto');
+    }
+}
+
+// Eliminar proveedor
+async function eliminarProveedor(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este proveedor?')) return;
+
+    try {
+        const response = await fetch(`/api/proveedores/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Proveedor eliminado exitosamente');
+            loadFinancieroData();
+        } else {
+            alert('Error al eliminar el proveedor');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el proveedor');
+    }
+}
+
+// Funciones adicionales (implementar según necesidad)
+function verGasto(id) {
+    // Implementar vista de gasto
+    alert('Función en desarrollo');
+}
+
+function editarGasto(id) {
+    // Implementar edición de gasto
+    alert('Función en desarrollo');
+}
+
+function editarProveedor(id) {
+    // Implementar edición de proveedor
+    alert('Función en desarrollo');
+}
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadFinancieroData();
+});
+</script>
+{% endblock %} 

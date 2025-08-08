@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Compras - Gestión de Vehículos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-volver me-3" onclick="window.location.href='/'">
+                                <i class="fas fa-arrow-left"></i>Volver
+                            </button>
+                            <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Gestión de Compras</h5>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('nuevaCompraModal')">
+                            <i class="fas fa-plus me-2"></i>Nueva Compra
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Compras</h6>
+                            <h3 class="mb-0">G <span id="totalCompras">0</span></h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Vehículos Comprados</h6>
+                            <h3 class="mb-0"><span id="totalVehiculos">0</span></h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-car fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Promedio Compra</h6>
+                            <h3 class="mb-0">G <span id="promedioCompra">0</span></h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Este Mes</h6>
+                            <h3 class="mb-0">G <span id="comprasMes">0</span></h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Vehículo, proveedor...">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="estadoFilter">
+                                <option value="">Todos</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Completada">Completada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Fecha Desde</label>
+                            <input type="date" class="form-control" id="fechaDesde">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Fecha Hasta</label>
+                            <input type="date" class="form-control" id="fechaHasta">
+                        </div>
+                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                            <button class="btn btn-secondary me-2" onclick="clearFilters()">
+                                <i class="fas fa-times me-2"></i>Limpiar
+                            </button>
+                            <button class="btn btn-primary" onclick="exportToExcel()">
+                                <i class="fas fa-download me-2"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compras Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="comprasTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Vehículo</th>
+                                    <th>Proveedor</th>
+                                    <th>Precio Compra</th>
+                                    <th>Estado</th>
+                                    <th>Observaciones</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comprasTableBody">
+                                <!-- Los datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Compra -->
+<div class="modal fade" id="nuevaCompraModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-shopping-cart me-2"></i>Nueva Compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevaCompraForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Vehículo *</label>
+                            <select class="form-select" name="vehiculo_id" required>
+                                <option value="">Seleccionar vehículo...</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Proveedor *</label>
+                            <select class="form-select" name="proveedor_id" required>
+                                <option value="">Seleccionar proveedor...</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha de Compra *</label>
+                            <input type="date" class="form-control" name="fecha_compra" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Precio de Compra *</label>
+                            <input type="number" class="form-control" name="precio_compra" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Forma de Pago</label>
+                            <select class="form-select" name="forma_pago">
+                                <option value="Contado">Contado</option>
+                                <option value="Crédito">Crédito</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" name="estado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Completada">Completada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarCompra()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let compras = [];
+    let filteredCompras = [];
+
+    // Cargar datos al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCompras();
+        updateSummary();
+    });
+
+    // Función para cargar compras
+    async function loadCompras() {
+        try {
+            // Por ahora usamos datos de ejemplo
+            compras = [
+                {
+                    id: 1,
+                    fecha: '2025-08-06',
+                    vehiculo: 'Toyota Corolla 2020',
+                    proveedor: 'Auto Import S.A.',
+                    precio_compra: 25000000,
+                    estado: 'Completada',
+                    observaciones: 'Vehículo en buen estado'
+                }
+            ];
+            filteredCompras = [...compras];
+            renderCompras();
+        } catch (error) {
+            console.error('Error cargando compras:', error);
+        }
+    }
+
+    // Función para renderizar compras
+    function renderCompras() {
+        const tbody = document.getElementById('comprasTableBody');
+        tbody.innerHTML = '';
+
+        filteredCompras.forEach(compra => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${compra.id}</td>
+                <td>${compra.fecha}</td>
+                <td>${compra.vehiculo}</td>
+                <td>${compra.proveedor}</td>
+                <td>G ${compra.precio_compra.toLocaleString()}</td>
+                <td>
+                    <span class="badge badge-${getEstadoBadgeClass(compra.estado)}">
+                        ${compra.estado}
+                    </span>
+                </td>
+                <td>${compra.observaciones || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editarCompra(${compra.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarCompra(${compra.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Función para obtener clase de badge según estado
+    function getEstadoBadgeClass(estado) {
+        switch(estado) {
+            case 'Completada': return 'success';
+            case 'Pendiente': return 'warning';
+            case 'Cancelada': return 'danger';
+            default: return 'info';
+        }
+    }
+
+    // Función para actualizar resumen
+    function updateSummary() {
+        const totalCompras = compras.reduce((sum, compra) => sum + compra.precio_compra, 0);
+        const totalVehiculos = compras.length;
+        const promedioCompra = totalVehiculos > 0 ? totalCompras / totalVehiculos : 0;
+        const comprasMes = compras.filter(c => {
+            const fecha = new Date(c.fecha);
+            const ahora = new Date();
+            return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
+        }).reduce((sum, compra) => sum + compra.precio_compra, 0);
+
+        document.getElementById('totalCompras').textContent = totalCompras.toLocaleString();
+        document.getElementById('totalVehiculos').textContent = totalVehiculos;
+        document.getElementById('promedioCompra').textContent = Math.round(promedioCompra).toLocaleString();
+        document.getElementById('comprasMes').textContent = comprasMes.toLocaleString();
+    }
+
+    // Función para abrir modal
+    function openModal(modalId) {
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+    }
+
+    // Función para guardar compra
+    async function guardarCompra() {
+        const form = document.getElementById('nuevaCompraForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            // Aquí implementarías la llamada a la API
+            console.log('Guardando compra:', data);
+            
+            // Simular guardado exitoso
+            bootstrap.Modal.getInstance(document.getElementById('nuevaCompraModal')).hide();
+            form.reset();
+            alert('Compra guardada exitosamente');
+        } catch (error) {
+            console.error('Error guardando compra:', error);
+            alert('Error al guardar compra');
+        }
+    }
+
+    // Función para editar compra
+    function editarCompra(id) {
+        const compra = compras.find(c => c.id === id);
+        if (compra) {
+            console.log('Editando compra:', compra);
+            // Implementar lógica de edición
+        }
+    }
+
+    // Función para eliminar compra
+    async function eliminarCompra(id) {
+        if (confirm('¿Está seguro de que desea eliminar esta compra?')) {
+            try {
+                console.log('Eliminando compra:', id);
+                // Implementar lógica de eliminación
+                alert('Compra eliminada exitosamente');
+            } catch (error) {
+                console.error('Error eliminando compra:', error);
+                alert('Error al eliminar compra');
+            }
+        }
+    }
+
+    // Función para limpiar filtros
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('estadoFilter').value = '';
+        document.getElementById('fechaDesde').value = '';
+        document.getElementById('fechaHasta').value = '';
+        filteredCompras = [...compras];
+        renderCompras();
+    }
+
+    // Función para exportar a Excel
+    function exportToExcel() {
+        alert('Función de exportación en desarrollo');
+    }
+
+    // Event listeners para filtros
+    document.getElementById('searchInput').addEventListener('input', filterCompras);
+    document.getElementById('estadoFilter').addEventListener('change', filterCompras);
+    document.getElementById('fechaDesde').addEventListener('change', filterCompras);
+    document.getElementById('fechaHasta').addEventListener('change', filterCompras);
+
+    // Función para filtrar compras
+    function filterCompras() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const estadoFilter = document.getElementById('estadoFilter').value;
+        const fechaDesde = document.getElementById('fechaDesde').value;
+        const fechaHasta = document.getElementById('fechaHasta').value;
+
+        filteredCompras = compras.filter(compra => {
+            const matchesSearch = !searchTerm || 
+                compra.vehiculo.toLowerCase().includes(searchTerm) ||
+                compra.proveedor.toLowerCase().includes(searchTerm);
+            
+            const matchesEstado = !estadoFilter || compra.estado === estadoFilter;
+            const matchesFechaDesde = !fechaDesde || compra.fecha >= fechaDesde;
+            const matchesFechaHasta = !fechaHasta || compra.fecha <= fechaHasta;
+
+            return matchesSearch && matchesEstado && matchesFechaDesde && matchesFechaHasta;
+        });
+
+        renderCompras();
+    }
+</script>
+{% endblock %} 

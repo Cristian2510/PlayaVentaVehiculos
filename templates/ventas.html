@@ -1,0 +1,2397 @@
+{% extends "base.html" %}
+
+{% block title %}Ventas - Gestión de Vehículos{% endblock %}
+
+{% block content %}
+    <style>
+        /* Estilos compactos y profesionales */
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .table-sm td, .table-sm th {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .badge.small {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .form-control-sm, .form-select-sm {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        /* Hover effects */
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.05);
+        }
+        
+        /* Compact spacing */
+        .py-2 {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .px-3 {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        
+        /* Professional colors */
+        .bg-opacity-10 {
+            background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .btn-group-sm .btn {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.7rem;
+            }
+            
+            .table-sm td, .table-sm th {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* Estilos específicos para el modal de cuotas */
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+        
+        .modal-xl .modal-content {
+            border-radius: 12px;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.05);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+        
+        .badge.rounded-pill {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+        }
+        
+        .progress {
+            border-radius: 10px;
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Estilos para el dropdown de vehículos */
+        select[name="vehiculo_id"] {
+            background-color: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        select[name="vehiculo_id"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            outline: none;
+        }
+        
+        /* Estilos para las opciones del select */
+        select[name="vehiculo_id"] option:disabled {
+            background-color: #f5f5f5 !important;
+            color: #999 !important;
+            font-style: italic;
+        }
+        
+        /* Mejoras visuales para estados */
+        .vehiculo-disponible {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            font-weight: bold;
+        }
+        
+        .vehiculo-vendido {
+            background-color: #ffebee !important;
+            color: #c62828 !important;
+            font-style: italic;
+        }
+        
+        .vehiculo-reparacion {
+            background-color: #fff3e0 !important;
+            color: #ef6c00 !important;
+        }
+    </style>
+<div class="container-fluid">
+    <!-- Header con estadísticas compactas -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    Gestión de Ventas
+                </h4>
+                <button type="button" class="btn btn-primary btn-sm" onclick="abrirNuevaVenta()">
+                    <i class="fas fa-plus me-1"></i>Nueva Venta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Separado por Monedas - Plegable -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-primary text-white py-2" style="cursor: pointer;" onclick="toggleDashboard()">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Dashboard de Ventas
+                    <small class="ms-2 opacity-75" id="dashboardStatus">(Desplegado)</small>
+                </h6>
+                <i class="fas fa-chevron-down" id="dashboardIcon" style="transition: transform 0.3s ease;"></i>
+            </div>
+        </div>
+        <div class="card-body p-3" id="dashboardContent" style="transition: all 0.3s ease;">
+            <div class="row">
+                <!-- Sección Guaraníes -->
+                <div class="col-lg-6 mb-3">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-header bg-success text-white py-2">
+                            <h6 class="mb-0">
+                                <i class="fas fa-coins me-2"></i>Ventas en Guaraníes (Gs)
+                            </h6>
+                        </div>
+                <div class="card-body p-2">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="bg-success bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-dollar-sign text-success mb-1"></i>
+                                <div class="small text-muted">Total Guaraníes</div>
+                                <div class="fw-bold text-success" id="totalGuaranies">Gs 0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-success bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-calendar text-success mb-1"></i>
+                                <div class="small text-muted">Este Mes</div>
+                                <div class="fw-bold text-success" id="mesGuaranies">Gs 0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-success bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-car text-success mb-1"></i>
+                                <div class="small text-muted">Vehículos</div>
+                                <div class="fw-bold text-success" id="vehiculosGuaranies">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-success bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-chart-bar text-success mb-1"></i>
+                                <div class="small text-muted">Promedio</div>
+                                <div class="fw-bold text-success" id="promedioGuaranies">Gs 0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Dólares -->
+        <div class="col-lg-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-2">
+                    <h6 class="mb-0">
+                        <i class="fas fa-dollar-sign me-2"></i>Ventas en Dólares (USD)
+                    </h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="bg-primary bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-dollar-sign text-primary mb-1"></i>
+                                <div class="small text-muted">Total Dólares</div>
+                                <div class="fw-bold text-primary" id="totalDolares">$ 0.00</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-primary bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-calendar text-primary mb-1"></i>
+                                <div class="small text-muted">Este Mes</div>
+                                <div class="fw-bold text-primary" id="mesDolares">$ 0.00</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-primary bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-car text-primary mb-1"></i>
+                                <div class="small text-muted">Vehículos</div>
+                                <div class="fw-bold text-primary" id="vehiculosDolares">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-primary bg-opacity-10 rounded p-2 text-center">
+                                <i class="fas fa-chart-bar text-primary mb-1"></i>
+                                <div class="small text-muted">Promedio</div>
+                                <div class="fw-bold text-primary" id="promedioDolares">$ 0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body py-2 px-3">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-car text-info me-2"></i>
+                                <div>
+                                    <div class="small text-muted">Total Vehículos</div>
+                                    <div class="fw-bold text-info" id="totalVehiculos">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-handshake text-warning me-2"></i>
+                                <div>
+                                    <div class="small text-muted">Contado</div>
+                                    <div class="fw-bold text-warning" id="ventasContado">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-credit-card text-info me-2"></i>
+                                <div>
+                                    <div class="small text-muted">Financiadas</div>
+                                    <div class="fw-bold text-info" id="ventasFinanciadas">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-chart-line text-success me-2"></i>
+                                <div>
+                                    <div class="small text-muted">Tasa de Cambio</div>
+                                    <div class="fw-bold text-success">1 USD = 7,300 Gs</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros compactos -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Vehículo, cliente...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="estadoFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="Pagado">Pagado</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Parcial">Parcial</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="pagoFilter">
+                        <option value="">Todas las formas</option>
+                        <option value="Contado">Contado</option>
+                        <option value="Financiamiento">Financiamiento</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control form-control-sm" id="fechaDesde">
+                </div>
+                <div class="col-md-3">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
+                            <i class="fas fa-times me-1"></i>Limpiar
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="exportarVentas()">
+                            <i class="fas fa-download me-1"></i>Exportar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de ventas compacta -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-2">
+            <h6 class="mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Ventas
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 60px;">ID</th>
+                            <th class="text-center" style="width: 100px;">Fecha</th>
+                            <th style="width: 200px;">Vehículo</th>
+                            <th style="width: 180px;">Cliente</th>
+                            <th class="text-center" style="width: 120px;">Precio</th>
+                            <th class="text-center" style="width: 100px;">Pago</th>
+                            <th class="text-center" style="width: 100px;">Estado</th>
+                            <th class="text-center" style="width: 120px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ventasTableBody">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Venta -->
+<div class="modal fade" id="nuevaVentaModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-dollar-sign me-2"></i>Nueva Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevaVentaForm">
+                    <!-- Selector de Moneda -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <label class="form-label mb-0 me-3 fw-bold">Moneda:</label>
+                                        <div class="btn-group" role="group">
+                                            <input type="radio" class="btn-check" name="moneda" id="monedaG" value="G" checked>
+                                            <label class="btn btn-outline-success" for="monedaG">Guaraníes (G)</label>
+                                            <input type="radio" class="btn-check" name="moneda" id="monedaUSD" value="USD">
+                                            <label class="btn btn-outline-primary" for="monedaUSD">Dólares ($)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Principal -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-primary">Vehículo *</label>
+                            <select class="form-select border-primary" name="vehiculo_id" required>
+                                <option value="">Seleccionar vehículo...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-success">Cliente *</label>
+                            <select class="form-select border-success" name="cliente_id" required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Fechas y Precio -->
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold text-info">Fecha de Venta *</label>
+                            <input type="date" class="form-control border-info" name="fecha_venta" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold text-warning">Precio de Venta *</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="monedaSimbolo">G</span>
+                                <input type="number" class="form-control border-warning" name="precio_venta" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold text-secondary">Forma de Pago</label>
+                            <select class="form-select border-secondary" name="forma_pago" id="formaPagoSelect" onchange="toggleFinanciamiento()">
+                                <option value="Contado">Contado</option>
+                                <option value="Crédito">Crédito</option>
+                                <option value="Financiamiento">Financiamiento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Forma de Pago -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-dark">Forma de Pago</label>
+                            <select class="form-select border-dark" name="metodo_pago" id="metodoPago" onchange="mostrarCamposMetodoPago()">
+                                <option value="">Seleccionar método...</option>
+                                <option value="Efectivo">💵 Efectivo</option>
+                                <option value="Transferencia">🏦 Transferencia Bancaria</option>
+                                <option value="Cheque">📝 Cheque</option>
+                                <option value="Cambio">🔄 Cambio por otro vehículo</option>
+                                <option value="Mixto">💰 Pago mixto (efectivo + diferencia)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-dark">Estado de Pago</label>
+                            <select class="form-select border-dark" name="estado_pago">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Pagado">Pagado</option>
+                                <option value="Parcial">Parcial</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos adicionales según el método de pago (inicialmente ocultos) -->
+                    <div id="detallesMetodoPago" style="display: none;">
+                        <!-- Campos para Transferencia -->
+                        <div id="camposTransferencia" class="row mb-3" style="display: none;">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Banco</label>
+                                <input type="text" class="form-control form-control-sm" name="banco_transferencia" placeholder="Nombre del banco">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Nº de Transferencia</label>
+                                <input type="text" class="form-control form-control-sm" name="numero_transferencia" placeholder="Número de referencia">
+                            </div>
+                        </div>
+                        
+                        <!-- Campos para Cheque -->
+                        <div id="camposCheque" class="row mb-3" style="display: none;">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Banco del Cheque</label>
+                                <input type="text" class="form-control form-control-sm" name="banco_cheque" placeholder="Banco emisor">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Nº de Cheque</label>
+                                <input type="text" class="form-control form-control-sm" name="numero_cheque" placeholder="Número de cheque">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Fecha de Cobro</label>
+                                <input type="date" class="form-control form-control-sm" name="fecha_cobro_cheque">
+                            </div>
+                        </div>
+                        
+                        <!-- Campos para Cambio de Vehículo - Catastro Completo -->
+                        <div id="camposCambio" style="display: none;">
+                            <div class="card border-info bg-info bg-opacity-10 mb-3">
+                                <div class="card-header bg-info text-white py-2">
+                                    <h6 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Datos del Vehículo Recibido en Cambio</h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Datos básicos del vehículo -->
+                                    <div class="row mb-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted">Marca *</label>
+                                            <input type="text" class="form-control form-control-sm" name="cambio_marca" placeholder="Toyota, Ford, etc." required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted">Modelo *</label>
+                                            <input type="text" class="form-control form-control-sm" name="cambio_modelo" placeholder="Corolla, Focus, etc." required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small text-muted">Año *</label>
+                                            <input type="number" class="form-control form-control-sm" name="cambio_anio" min="1980" max="2030" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small text-muted">Color</label>
+                                            <input type="text" class="form-control form-control-sm" name="cambio_color" placeholder="Blanco, Negro, etc.">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small text-muted">Tipo</label>
+                                            <select class="form-select form-select-sm" name="cambio_tipo_vehiculo">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="Sedán">Sedán</option>
+                                                <option value="Hatchback">Hatchback</option>
+                                                <option value="SUV">SUV</option>
+                                                <option value="Pickup">Pickup</option>
+                                                <option value="Camioneta">Camioneta</option>
+                                                <option value="Moto">Moto</option>
+                                                <option value="Otro">Otro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Identificación del vehículo -->
+                                    <div class="row mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Número de Chasis *</label>
+                                            <input type="text" class="form-control form-control-sm" name="cambio_chasis" placeholder="Número de chasis" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Número de Motor</label>
+                                            <input type="text" class="form-control form-control-sm" name="cambio_motor" placeholder="Número de motor">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Placa</label>
+                                            <input type="text" class="form-control form-control-sm" name="cambio_placa" placeholder="ABC123 (opcional)">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Características técnicas -->
+                                    <div class="row mb-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted">Kilometraje</label>
+                                            <input type="number" class="form-control form-control-sm" name="cambio_kilometraje" min="0" placeholder="0">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted">Combustible</label>
+                                            <select class="form-select form-select-sm" name="cambio_combustible">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="Gasolina">Gasolina</option>
+                                                <option value="Diésel">Diésel</option>
+                                                <option value="Gas">Gas</option>
+                                                <option value="Híbrido">Híbrido</option>
+                                                <option value="Eléctrico">Eléctrico</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted">Transmisión</label>
+                                            <select class="form-select form-select-sm" name="cambio_transmision">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="Manual">Manual</option>
+                                                <option value="Automática">Automática</option>
+                                                <option value="Semi-automática">Semi-automática</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted">Estado del Vehículo</label>
+                                            <select class="form-select form-select-sm" name="cambio_estado">
+                                                <option value="Disponible">Disponible</option>
+                                                <option value="En reparación">En reparación</option>
+                                                <option value="Reservado">Reservado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Precios -->
+                                    <div class="row mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Valor Tasado (recibido) *</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text" id="simboloValorCambio">Gs</span>
+                                                <input type="number" class="form-control" name="valor_vehiculo_cambio" step="0.01" min="0" placeholder="Valor que se toma el vehículo" required onchange="calcularSaldoCambio()" oninput="formatearCampoMoneda(this)">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Precio de Venta Estimado</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text" id="simboloPrecioVentaCambio">Gs</span>
+                                                <input type="number" class="form-control" name="cambio_precio_venta" step="0.01" min="0" placeholder="Precio para vender después" oninput="formatearCampoMoneda(this)">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Saldo a Favor/Contra</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text" id="saldoSigno">Gs</span>
+                                                <input type="number" class="form-control" name="saldo_cambio" readonly style="background-color: #f8f9fa;" placeholder="Se calcula automáticamente">
+                                            </div>
+                                            <small class="text-muted" id="saldoTexto">Diferencia entre precio de venta y valor del vehículo recibido</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Opciones para el saldo cuando hay diferencia a favor del cliente -->
+                                    <div id="opcionesSaldo" style="display: none;">
+                                        <div class="alert alert-info border-primary p-2 mb-2">
+                                            <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>El Cliente Debe Recibir Dinero</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="forma_pago_saldo" id="saldoEfectivo" value="efectivo" onchange="mostrarCamposSaldo()">
+                                                        <label class="form-check-label" for="saldoEfectivo">
+                                                            💵 Pagar en Efectivo
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="forma_pago_saldo" id="saldoTransferencia" value="transferencia" onchange="mostrarCamposSaldo()">
+                                                        <label class="form-check-label" for="saldoTransferencia">
+                                                            🏦 Pagar por Transferencia
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="forma_pago_saldo" id="saldoCheque" value="cheque" onchange="mostrarCamposSaldo()">
+                                                        <label class="form-check-label" for="saldoCheque">
+                                                            📝 Pagar con Cheque
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="forma_pago_saldo" id="saldoFinanciado" value="financiado" onchange="mostrarCamposSaldo()">
+                                                        <label class="form-check-label" for="saldoFinanciado">
+                                                            📅 Financiar el Saldo
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="forma_pago_saldo" id="saldoCredito" value="credito" onchange="mostrarCamposSaldo()">
+                                                        <label class="form-check-label" for="saldoCredito">
+                                                            📋 Dejar en Cuenta Corriente
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Campos específicos para cada forma de pago del saldo -->
+                                        <div id="camposSaldoDetalle" style="display: none;"></div>
+                                    </div>
+                                    
+                                    <!-- Observaciones -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted">Observaciones del Vehículo Recibido</label>
+                                            <textarea class="form-control form-control-sm" name="cambio_observaciones" rows="2" placeholder="Estado general, defectos, reparaciones necesarias, etc."></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="auto_registrar_vehiculo" id="autoRegistrarVehiculo" checked>
+                                                <label class="form-check-label small text-success" for="autoRegistrarVehiculo">
+                                                    <i class="fas fa-check-circle me-1"></i>Registrar automáticamente este vehículo en el catastro de vehículos
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Campos para Pago Mixto -->
+                        <div id="camposMixto" class="row mb-3" style="display: none;">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Monto en Efectivo</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Gs</span>
+                                    <input type="number" class="form-control" name="monto_efectivo" step="0.01" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Monto Diferencia</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Gs</span>
+                                    <input type="number" class="form-control" name="monto_diferencia" step="0.01" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Método de la Diferencia</label>
+                                <select class="form-select form-select-sm" name="metodo_diferencia">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="Financiado">Financiado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos de financiamiento (inicialmente ocultos) -->
+                    <div id="financiamientoFields" style="display: none;">
+                        <div class="card border-warning bg-warning bg-opacity-10 mb-3">
+                            <div class="card-header bg-warning text-dark fw-bold">
+                                <i class="fas fa-credit-card me-2"></i>Configuración de Financiamiento
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-success">Entrega Inicial</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text" id="monedaSimbolo2">G</span>
+                                            <input type="number" class="form-control border-success" name="entrega_inicial" id="entregaInicial" step="0.01" min="0" onchange="calcularSaldoFinanciado()">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-info">Saldo Financiado</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text" id="monedaSimbolo3">G</span>
+                                            <input type="number" class="form-control border-info" id="saldoFinanciado" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-primary">Número de Cuotas</label>
+                                        <input type="number" class="form-control border-primary" name="numero_cuotas" id="numeroCuotas" min="1" max="60" onchange="calcularMontoCuota()">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-danger">Monto por Cuota</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text" id="monedaSimbolo4">G</span>
+                                            <input type="number" class="form-control border-danger" id="montoCuota" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-secondary">Fecha Primera Cuota</label>
+                                        <input type="date" class="form-control border-secondary" name="fecha_primer_cuota" id="fechaPrimerCuota">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-dark">Resumen de Cuotas</label>
+                                        <div id="resumenCuotas" class="alert alert-info border-0">
+                                            <small>Complete los campos para ver el resumen de cuotas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tabla de Cuotas Generadas -->
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label fw-bold text-dark">Cuotas Generadas</label>
+                                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                            <table class="table table-sm table-striped table-bordered border-primary" id="cuotasGeneradasTable">
+                                                <thead class="table-primary">
+                                                    <tr>
+                                                        <th class="text-center">N°</th>
+                                                        <th class="text-center">Monto</th>
+                                                        <th class="text-center">Fecha Vencimiento</th>
+                                                        <th class="text-center">Estado</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="cuotasGeneradasTableBody">
+                                                    <tr>
+                                                        <td colspan="4" class="text-center text-muted">
+                                                            <small>Complete los campos de financiamiento para ver las cuotas</small>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Observaciones -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-bold text-muted">Observaciones</label>
+                            <textarea class="form-control border-muted" name="observaciones" rows="2" placeholder="Observaciones adicionales..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="guardarVenta()">
+                    <i class="fas fa-save me-2"></i>Guardar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Cuotas -->
+<div class="modal fade" id="cuotasModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-primary text-white border-0">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-credit-card me-2"></i>Cuotas de Venta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Información compacta de la venta -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-8">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body p-3">
+                                <div class="row g-2" id="infoVenta">
+                                    <!-- Información dinámica -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card border-0 bg-primary bg-opacity-10">
+                            <div class="card-body p-3">
+                                <h6 class="text-primary mb-2"><i class="fas fa-chart-pie me-1"></i>Resumen</h6>
+                                <div id="resumenPagos">
+                                    <!-- Resumen dinámico -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabla de cuotas compacta -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h6 class="mb-0 text-dark">
+                            <i class="fas fa-list-ul me-2 text-primary"></i>Detalle de Cuotas
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0" id="cuotasTable">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="text-center border-0 py-2" style="width: 8%">N°</th>
+                                        <th class="text-center border-0 py-2" style="width: 15%">Monto</th>
+                                        <th class="text-center border-0 py-2" style="width: 15%">Vencimiento</th>
+                                        <th class="text-center border-0 py-2" style="width: 12%">Días</th>
+                                        <th class="text-center border-0 py-2" style="width: 12%">Estado</th>
+                                        <th class="text-center border-0 py-2" style="width: 15%">Pago</th>
+                                        <th class="text-center border-0 py-2" style="width: 15%">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuotasTableBody">
+                                    <!-- Los datos se cargarán dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let ventas = [];
+    let filteredVentas = [];
+    let monedaActual = 'G'; // Moneda por defecto
+
+    // Cargar datos al iniciar
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Restaurar estado del dashboard
+        restoreDashboardState();
+        
+        await loadVentas();
+        await updateSummary();
+        loadVehiculos();
+        loadClientes();
+        setupMonedaListeners();
+    });
+
+    // Configurar listeners para cambio de moneda
+    function setupMonedaListeners() {
+        document.getElementById('monedaG').addEventListener('change', function() {
+            if (this.checked) {
+                cambiarMoneda('G');
+            }
+        });
+        
+        document.getElementById('monedaUSD').addEventListener('change', function() {
+            if (this.checked) {
+                cambiarMoneda('USD');
+            }
+        });
+    }
+
+    // Función para cambiar moneda
+    function cambiarMoneda(nuevaMoneda) {
+        monedaActual = nuevaMoneda;
+        const simbolo = nuevaMoneda === 'G' ? 'G' : '$';
+        
+        // Actualizar todos los símbolos de moneda
+        document.getElementById('monedaSimbolo').textContent = simbolo;
+        document.getElementById('monedaSimbolo2').textContent = simbolo;
+        document.getElementById('monedaSimbolo3').textContent = simbolo;
+        document.getElementById('monedaSimbolo4').textContent = simbolo;
+        
+        // Actualizar símbolos en los campos de cambio de vehículo
+        actualizarSimbolosMonedaCambio();
+        
+        // Recalcular el saldo si hay valores en cambio de vehículo
+        calcularSaldoCambio();
+        
+        // Actualizar resumen de cuotas si existe
+        actualizarResumenCuotas();
+        
+        // Ya no necesitamos actualizar dashboard porque mostramos ambas monedas separadas
+    }
+
+    // Función para actualizar símbolos de moneda en campos de cambio
+    function actualizarSimbolosMonedaCambio() {
+        const esGuaranies = monedaActual === 'G';
+        const simbolo = esGuaranies ? 'Gs' : '$';
+        
+        // Actualizar símbolos en los campos de cambio de vehículo
+        const simboloValorCambio = document.getElementById('simboloValorCambio');
+        const simboloPrecioVentaCambio = document.getElementById('simboloPrecioVentaCambio');
+        
+        if (simboloValorCambio) simboloValorCambio.textContent = simbolo;
+        if (simboloPrecioVentaCambio) simboloPrecioVentaCambio.textContent = simbolo;
+        
+        // Actualizar el step de los inputs según la moneda
+        const inputValorCambio = document.querySelector('input[name="valor_vehiculo_cambio"]');
+        const inputPrecioVentaCambio = document.querySelector('input[name="cambio_precio_venta"]');
+        
+        if (inputValorCambio) {
+            inputValorCambio.step = esGuaranies ? "1" : "0.01";
+            inputValorCambio.placeholder = esGuaranies ? "Ej: 45000000" : "Ej: 6150.00";
+        }
+        
+        if (inputPrecioVentaCambio) {
+            inputPrecioVentaCambio.step = esGuaranies ? "1" : "0.01";
+            inputPrecioVentaCambio.placeholder = esGuaranies ? "Ej: 48000000" : "Ej: 6500.00";
+        }
+    }
+
+    // Función para formatear campos de moneda mientras se escribe
+    function formatearCampoMoneda(input) {
+        const esGuaranies = monedaActual === 'G';
+        
+        if (esGuaranies) {
+            // Para guaraníes, remover decimales automáticamente
+            let valor = input.value;
+            if (valor.includes('.')) {
+                input.value = valor.split('.')[0];
+            }
+        }
+        
+        // Recalcular saldo si es el campo de valor de cambio
+        if (input.name === 'valor_vehiculo_cambio') {
+            calcularSaldoCambio();
+        }
+    }
+
+    // Función para formatear moneda
+    function formatearMoneda(monto) {
+        if (monedaActual === 'G') {
+            return `G ${parseFloat(monto).toLocaleString()}`;
+        } else {
+            return `$ ${parseFloat(monto).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+    }
+
+    // Función para cargar ventas
+    async function loadVentas() {
+        try {
+            const response = await fetch('/api/ventas');
+            ventas = await response.json();
+            filteredVentas = [...ventas];
+            renderVentas();
+            await updateSummary(); // Actualizar dashboard después de cargar ventas
+        } catch (error) {
+            console.error('Error cargando ventas:', error);
+        }
+    }
+
+    // Función para cargar vehículos
+    async function loadVehiculos() {
+        try {
+            const response = await fetch('/api/vehiculos');
+            const vehiculos = await response.json();
+            const select = document.querySelector('select[name="vehiculo_id"]');
+            
+            console.log('Vehículos cargados:', vehiculos); // Debug
+            console.log('Select encontrado:', select); // Debug
+            
+            // Limpiar opciones existentes excepto la primera
+            select.innerHTML = '<option value="">Seleccionar vehículo...</option>';
+            
+            // Mostrar todos los vehículos con colores según estado
+            vehiculos.forEach(vehiculo => {
+                const option = document.createElement('option');
+                option.value = vehiculo.id;
+                option.textContent = `${vehiculo.marca} ${vehiculo.modelo} - ${vehiculo.año} (${vehiculo.color})`;
+                
+                // Aplicar estilos y comportamiento según el estado
+                if (vehiculo.estado === 'Vendido') {
+                    option.style.backgroundColor = '#ffebee'; // Fondo rojo claro
+                    option.style.color = '#c62828'; // Texto rojo oscuro
+                    option.style.fontStyle = 'italic';
+                    option.textContent += ' ❌ VENDIDO';
+                    option.disabled = true; // No se puede seleccionar
+                } else if (vehiculo.estado === 'Disponible') {
+                    option.style.backgroundColor = '#e8f5e8'; // Fondo verde claro
+                    option.style.color = '#2e7d32'; // Texto verde oscuro
+                    option.style.fontWeight = 'bold';
+                    option.textContent += ' ✅ DISPONIBLE';
+                } else if (vehiculo.estado === 'En reparación') {
+                    option.style.backgroundColor = '#fff3e0'; // Fondo naranja claro
+                    option.style.color = '#ef6c00'; // Texto naranja oscuro
+                    option.textContent += ' 🔧 EN REPARACIÓN';
+                    option.disabled = true; // No se puede seleccionar
+                }
+                
+                select.appendChild(option);
+            });
+            
+            console.log('Opciones agregadas al select:', select.children.length); // Debug
+        } catch (error) {
+            console.error('Error cargando vehículos:', error);
+        }
+    }
+
+    // Función para cargar clientes
+    async function loadClientes() {
+        try {
+            const response = await fetch('/api/clientes');
+            const clientes = await response.json();
+            const select = document.querySelector('select[name="cliente_id"]');
+            
+            // Limpiar opciones existentes excepto la primera
+            select.innerHTML = '<option value="">Seleccionar cliente...</option>';
+            
+            clientes.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = `${cliente.nombre} ${cliente.apellido} - ${cliente.cedula}`;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error cargando clientes:', error);
+        }
+    }
+
+    // Función para renderizar ventas
+    function renderVentas() {
+        const tbody = document.getElementById('ventasTableBody');
+        tbody.innerHTML = '';
+
+        filteredVentas.forEach(venta => {
+            const row = document.createElement('tr');
+            row.className = 'align-middle';
+            row.innerHTML = `
+                <td class="text-center">
+                    <span class="badge bg-secondary rounded-pill small">${venta.id}</span>
+                </td>
+                <td class="text-center">
+                    <small class="text-muted">${venta.fecha_venta}</small>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-car text-primary me-1"></i>
+                        <div>
+                            <div class="fw-bold small">${venta.vehiculo_marca} ${venta.vehiculo_modelo}</div>
+                            <small class="text-muted">${venta.vehiculo_anio || ''}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user text-success me-1"></i>
+                        <div>
+                            <div class="fw-bold small">${venta.cliente_nombre}</div>
+                            <small class="text-muted">${venta.cliente_cedula || ''}</small>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="fw-bold text-success small">${formatearMoneda(venta.precio_venta)}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-info text-dark small">${venta.forma_pago || '-'}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-${getEstadoBadgeClass(venta.estado_pago)} small">
+                        ${venta.estado_pago}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editarVenta(${venta.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${venta.forma_pago === 'Financiamiento' ? 
+                            `<button class="btn btn-outline-info btn-sm" onclick="verCuotas(${venta.id})" title="Ver Cuotas">
+                                <i class="fas fa-list"></i>
+                            </button>` : ''
+                        }
+                        <button class="btn btn-outline-success btn-sm" onclick="generarFactura(${venta.id})" title="Factura">
+                            <i class="fas fa-receipt"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="eliminarVenta(${venta.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Función para obtener clase de badge según estado
+    function getEstadoBadgeClass(estado) {
+        switch(estado) {
+            case 'Pagado': return 'success';
+            case 'Pendiente': return 'warning';
+            case 'Parcial': return 'info';
+            case 'Cancelada': return 'danger';
+            default: return 'info';
+        }
+    }
+
+    // Función para plegar/desplegar dashboard
+    function toggleDashboard() {
+        const content = document.getElementById('dashboardContent');
+        const icon = document.getElementById('dashboardIcon');
+        const status = document.getElementById('dashboardStatus');
+        
+        if (content.style.display === 'none' || content.style.display === '') {
+            // Desplegar
+            content.style.display = 'block';
+            icon.className = 'fas fa-chevron-down';
+            icon.style.transform = 'rotate(0deg)';
+            status.textContent = '(Desplegado)';
+            // Guardar estado en localStorage
+            localStorage.setItem('dashboardCollapsed', 'false');
+        } else {
+            // Plegar
+            content.style.display = 'none';
+            icon.className = 'fas fa-chevron-right';
+            icon.style.transform = 'rotate(0deg)';
+            status.textContent = '(Plegado)';
+            // Guardar estado en localStorage
+            localStorage.setItem('dashboardCollapsed', 'true');
+        }
+    }
+
+    // Función para restaurar estado del dashboard al cargar la página
+    function restoreDashboardState() {
+        const content = document.getElementById('dashboardContent');
+        const icon = document.getElementById('dashboardIcon');
+        const status = document.getElementById('dashboardStatus');
+        const isCollapsed = localStorage.getItem('dashboardCollapsed') === 'true';
+        
+        if (isCollapsed) {
+            content.style.display = 'none';
+            icon.className = 'fas fa-chevron-right';
+            status.textContent = '(Plegado)';
+        } else {
+            content.style.display = 'block';
+            icon.className = 'fas fa-chevron-down';
+            status.textContent = '(Desplegado)';
+        }
+    }
+
+    // Función para actualizar resumen con monedas separadas
+    async function updateSummary() {
+        try {
+            // Separar ventas por moneda
+            const ventasGuaranies = ventas.filter(v => v.moneda === 'G');
+            const ventasDolares = ventas.filter(v => v.moneda === 'USD');
+            
+            // === CÁLCULOS PARA GUARANÍES ===
+            const totalGuaranies = ventasGuaranies.reduce((sum, venta) => sum + venta.precio_venta, 0);
+            const vehiculosGuaranies = ventasGuaranies.length;
+            const promedioGuaranies = vehiculosGuaranies > 0 ? totalGuaranies / vehiculosGuaranies : 0;
+            
+            // Ventas del mes en Guaraníes
+            const mesGuaranies = ventasGuaranies.filter(v => {
+                const ventaDate = new Date(v.fecha_venta);
+                const now = new Date();
+                return ventaDate.getMonth() === now.getMonth() && ventaDate.getFullYear() === now.getFullYear();
+            }).reduce((sum, venta) => sum + venta.precio_venta, 0);
+            
+            // === CÁLCULOS PARA DÓLARES ===
+            const totalDolares = ventasDolares.reduce((sum, venta) => sum + venta.precio_venta, 0);
+            const vehiculosDolares = ventasDolares.length;
+            const promedioDolares = vehiculosDolares > 0 ? totalDolares / vehiculosDolares : 0;
+            
+            // Ventas del mes en Dólares
+            const mesDolares = ventasDolares.filter(v => {
+                const ventaDate = new Date(v.fecha_venta);
+                const now = new Date();
+                return ventaDate.getMonth() === now.getMonth() && ventaDate.getFullYear() === now.getFullYear();
+            }).reduce((sum, venta) => sum + venta.precio_venta, 0);
+            
+            // === CÁLCULOS GENERALES ===
+            const totalVehiculos = ventas.length;
+            const ventasContado = ventas.filter(v => v.forma_pago === 'Contado').length;
+            const ventasFinanciadas = ventas.filter(v => v.forma_pago === 'Financiamiento').length;
+            
+            // === ACTUALIZAR ELEMENTOS DEL DOM ===
+            
+            // Sección Guaraníes
+            document.getElementById('totalGuaranies').textContent = `Gs ${totalGuaranies.toLocaleString('es-PY', {maximumFractionDigits: 0})}`;
+            document.getElementById('mesGuaranies').textContent = `Gs ${mesGuaranies.toLocaleString('es-PY', {maximumFractionDigits: 0})}`;
+            document.getElementById('vehiculosGuaranies').textContent = vehiculosGuaranies;
+            document.getElementById('promedioGuaranies').textContent = `Gs ${Math.round(promedioGuaranies).toLocaleString('es-PY', {maximumFractionDigits: 0})}`;
+            
+            // Sección Dólares
+            document.getElementById('totalDolares').textContent = `$ ${totalDolares.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('mesDolares').textContent = `$ ${mesDolares.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('vehiculosDolares').textContent = vehiculosDolares;
+            document.getElementById('promedioDolares').textContent = `$ ${promedioDolares.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            // Resumen General
+            document.getElementById('totalVehiculos').textContent = totalVehiculos;
+            document.getElementById('ventasContado').textContent = ventasContado;
+            document.getElementById('ventasFinanciadas').textContent = ventasFinanciadas;
+            
+        } catch (error) {
+            console.error('Error cargando datos del dashboard:', error);
+            // Fallback con valores por defecto
+            document.getElementById('totalGuaranies').textContent = 'Gs 0';
+            document.getElementById('mesGuaranies').textContent = 'Gs 0';
+            document.getElementById('vehiculosGuaranies').textContent = '0';
+            document.getElementById('promedioGuaranies').textContent = 'Gs 0';
+            
+            document.getElementById('totalDolares').textContent = '$ 0.00';
+            document.getElementById('mesDolares').textContent = '$ 0.00';
+            document.getElementById('vehiculosDolares').textContent = '0';
+            document.getElementById('promedioDolares').textContent = '$ 0.00';
+            
+            document.getElementById('totalVehiculos').textContent = '0';
+            document.getElementById('ventasContado').textContent = '0';
+            document.getElementById('ventasFinanciadas').textContent = '0';
+            const ventasMes = ventas.filter(v => {
+                const fecha = new Date(v.fecha_venta);
+                const ahora = new Date();
+                return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
+            }).reduce((sum, venta) => sum + venta.precio_venta, 0);
+
+            document.getElementById('totalVentas').textContent = formatearMoneda(totalVentas);
+            document.getElementById('vehiculosVendidos').textContent = totalVehiculos;
+            document.getElementById('promedioVenta').textContent = formatearMoneda(Math.round(promedioVenta));
+            document.getElementById('ventasMes').textContent = formatearMoneda(ventasMes);
+        }
+    }
+
+    // Función para abrir modal
+    function openModal(modalId) {
+        if (modalId === 'nuevaVentaModal') {
+            // Recargar datos cuando se abre el modal de nueva venta
+            loadVehiculos();
+            loadClientes();
+        }
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+    }
+
+    // Variable para controlar envíos duplicados
+    let isSubmitting = false;
+
+    // Función para guardar venta
+    async function guardarVenta() {
+        // Prevenir envíos duplicados
+        if (isSubmitting) {
+            console.log('Ya se está enviando una venta, esperando...');
+            return;
+        }
+
+        const form = document.getElementById('nuevaVentaForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Verificar si es edición o creación
+        const editId = form.dataset.editId;
+        const isEditing = editId && editId !== '';
+        const method = isEditing ? 'PUT' : 'POST';
+        const url = isEditing ? `/api/ventas/${editId}` : '/api/ventas';
+        
+        // Agregar moneda actual
+        data.moneda = monedaActual;
+
+        // Recopilar datos del método de pago según el método seleccionado
+        const metodoPago = data.metodo_pago;
+        if (metodoPago === 'Transferencia') {
+            data.banco_transferencia = document.querySelector('input[name="banco_transferencia"]')?.value || '';
+            data.numero_transferencia = document.querySelector('input[name="numero_transferencia"]')?.value || '';
+        } else if (metodoPago === 'Cheque') {
+            data.banco_cheque = document.querySelector('input[name="banco_cheque"]')?.value || '';
+            data.numero_cheque = document.querySelector('input[name="numero_cheque"]')?.value || '';
+            data.fecha_cobro_cheque = document.querySelector('input[name="fecha_cobro_cheque"]')?.value || '';
+        } else if (metodoPago === 'Cambio') {
+            // Datos básicos del vehículo de cambio
+            data.cambio_marca = document.querySelector('input[name="cambio_marca"]')?.value || '';
+            data.cambio_modelo = document.querySelector('input[name="cambio_modelo"]')?.value || '';
+            data.cambio_anio = document.querySelector('input[name="cambio_anio"]')?.value || '';
+            data.cambio_color = document.querySelector('input[name="cambio_color"]')?.value || '';
+            data.cambio_tipo_vehiculo = document.querySelector('select[name="cambio_tipo_vehiculo"]')?.value || '';
+            
+            // Identificación del vehículo
+            data.cambio_chasis = document.querySelector('input[name="cambio_chasis"]')?.value || '';
+            data.cambio_motor = document.querySelector('input[name="cambio_motor"]')?.value || '';
+            data.cambio_placa = document.querySelector('input[name="cambio_placa"]')?.value || '';
+            
+            // Características técnicas
+            data.cambio_kilometraje = document.querySelector('input[name="cambio_kilometraje"]')?.value || '';
+            data.cambio_combustible = document.querySelector('select[name="cambio_combustible"]')?.value || '';
+            data.cambio_transmision = document.querySelector('select[name="cambio_transmision"]')?.value || '';
+            data.cambio_estado = document.querySelector('select[name="cambio_estado"]')?.value || '';
+            
+            // Precios y observaciones
+            data.valor_vehiculo_cambio = document.querySelector('input[name="valor_vehiculo_cambio"]')?.value || '';
+            data.cambio_precio_venta = document.querySelector('input[name="cambio_precio_venta"]')?.value || '';
+            data.cambio_observaciones = document.querySelector('textarea[name="cambio_observaciones"]')?.value || '';
+            data.auto_registrar_vehiculo = document.querySelector('input[name="auto_registrar_vehiculo"]')?.checked || false;
+        } else if (metodoPago === 'Mixto') {
+            data.monto_efectivo = document.querySelector('input[name="monto_efectivo"]')?.value || '';
+            data.monto_diferencia = document.querySelector('input[name="monto_diferencia"]')?.value || '';
+            data.metodo_diferencia = document.querySelector('select[name="metodo_diferencia"]')?.value || '';
+        }
+
+        // Validaciones del frontend
+        if (!data.vehiculo_id) {
+            alert('Debe seleccionar un vehículo');
+            return;
+        }
+        if (!data.cliente_id) {
+            alert('Debe seleccionar un cliente');
+            return;
+        }
+        if (!data.precio_venta || data.precio_venta <= 0) {
+            alert('Debe ingresar un precio de venta válido');
+            return;
+        }
+
+        // Validaciones para método de pago
+        if (data.metodo_pago === 'Transferencia') {
+            if (!data.banco_transferencia) {
+                alert('Para transferencia debe especificar el banco');
+                return;
+            }
+            if (!data.numero_transferencia) {
+                alert('Para transferencia debe especificar el número de referencia');
+                return;
+            }
+        } else if (data.metodo_pago === 'Cheque') {
+            if (!data.banco_cheque) {
+                alert('Para cheque debe especificar el banco emisor');
+                return;
+            }
+            if (!data.numero_cheque) {
+                alert('Para cheque debe especificar el número de cheque');
+                return;
+            }
+        } else if (data.metodo_pago === 'Cambio') {
+            if (!data.cambio_marca) {
+                alert('Para cambio debe especificar la marca del vehículo recibido');
+                return;
+            }
+            if (!data.cambio_modelo) {
+                alert('Para cambio debe especificar el modelo del vehículo recibido');
+                return;
+            }
+            if (!data.cambio_anio) {
+                alert('Para cambio debe especificar el año del vehículo recibido');
+                return;
+            }
+            if (!data.cambio_chasis) {
+                alert('Para cambio debe especificar el número de chasis del vehículo recibido');
+                return;
+            }
+            if (!data.valor_vehiculo_cambio || parseFloat(data.valor_vehiculo_cambio) <= 0) {
+                alert('Para cambio debe especificar el valor del vehículo recibido');
+                return;
+            }
+        } else if (data.metodo_pago === 'Mixto') {
+            if (!data.monto_efectivo || parseFloat(data.monto_efectivo) <= 0) {
+                alert('Para pago mixto debe especificar el monto en efectivo');
+                return;
+            }
+            if (!data.monto_diferencia || parseFloat(data.monto_diferencia) <= 0) {
+                alert('Para pago mixto debe especificar el monto de la diferencia');
+                return;
+            }
+            if (!data.metodo_diferencia) {
+                alert('Para pago mixto debe especificar el método de la diferencia');
+                return;
+            }
+        }
+
+        // Validaciones para financiamiento
+        if (data.forma_pago === 'Financiamiento') {
+            if (!data.entrega_inicial || data.entrega_inicial <= 0) {
+                alert('Para financiamiento debe especificar una entrega inicial');
+                return;
+            }
+            if (!data.numero_cuotas || data.numero_cuotas <= 0) {
+                alert('Para financiamiento debe especificar el número de cuotas');
+                return;
+            }
+            if (!data.fecha_primer_cuota) {
+                alert('Para financiamiento debe especificar la fecha de la primera cuota');
+                return;
+            }
+            if (parseFloat(data.entrega_inicial) >= parseFloat(data.precio_venta)) {
+                alert('Para financiamiento debe haber un saldo a financiar (entrega inicial menor al precio)');
+                return;
+            }
+        }
+
+        // Marcar como enviando
+        isSubmitting = true;
+        
+        // Deshabilitar el botón
+        const submitButton = document.querySelector('button[onclick="guardarVenta()"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Cerrar modal y recargar datos
+                bootstrap.Modal.getInstance(document.getElementById('nuevaVentaModal')).hide();
+                // Limpiar formulario y resetear estado
+                form.reset();
+                delete form.dataset.editId;
+                
+                // Restaurar título y botón originales
+                document.querySelector('#nuevaVentaModal .modal-title').innerHTML = '<i class="fas fa-dollar-sign me-2"></i>Nueva Venta';
+                const submitButton = document.querySelector('button[onclick="guardarVenta()"]');
+                if (submitButton) {
+                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Venta';
+                }
+                
+                // Ocultar campos de método de pago al resetear
+                document.getElementById('detallesMetodoPago').style.display = 'none';
+                document.getElementById('financiamientoFields').style.display = 'none';
+                
+                loadVentas();
+                updateSummary();
+                
+                // Mensaje específico según el tipo de operación
+                const operacion = isEditing ? 'actualizada' : 'guardada';
+                if (data.forma_pago === 'Financiamiento' && !isEditing) {
+                    const entregaInicial = parseFloat(data.entrega_inicial);
+                    const saldoFinanciado = parseFloat(data.precio_venta) - entregaInicial;
+                    const montoCuota = saldoFinanciado / parseInt(data.numero_cuotas);
+                    
+                    alert(`✅ Venta financiada ${operacion} exitosamente!\n\n📋 Resumen:\n• Entrega inicial: ${formatearMoneda(entregaInicial)}\n• Saldo financiado: ${formatearMoneda(saldoFinanciado)}\n• N° cuotas: ${data.numero_cuotas}\n• Monto por cuota: ${formatearMoneda(montoCuota)}`);
+                } else {
+                    alert(`✅ Venta ${operacion} exitosamente`);
+                }
+            } else {
+                alert(`❌ Error al guardar venta: ${result.error || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            console.error('Error guardando venta:', error);
+            alert('❌ Error de conexión al guardar la venta');
+        } finally {
+            // Restaurar estado
+            isSubmitting = false;
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Venta';
+            }
+        }
+    }
+
+    // Función para editar venta
+    function editarVenta(id) {
+        console.log('Intentando editar venta con ID:', id);
+        console.log('Ventas disponibles:', ventas);
+        
+        const venta = ventas.find(v => v.id === id);
+        if (venta) {
+            console.log('Venta encontrada para editar:', venta);
+            
+            try {
+                // Limpiar formulario primero
+                document.getElementById('nuevaVentaForm').reset();
+                
+                // Llenar el formulario con los datos de la venta
+                const vehiculoSelect = document.querySelector('select[name="vehiculo_id"]');
+                const clienteSelect = document.querySelector('select[name="cliente_id"]');
+                const fechaInput = document.querySelector('input[name="fecha_venta"]');
+                const precioInput = document.querySelector('input[name="precio_venta"]');
+                const formaPagoSelect = document.querySelector('select[name="forma_pago"]');
+                const estadoPagoSelect = document.querySelector('select[name="estado_pago"]');
+                const monedaSelect = document.querySelector('select[name="moneda"]');
+                
+                // Verificar que los elementos existen antes de asignar valores
+                if (vehiculoSelect) vehiculoSelect.value = venta.vehiculo_id || '';
+                if (clienteSelect) clienteSelect.value = venta.cliente_id || '';
+                if (fechaInput) fechaInput.value = venta.fecha_venta || '';
+                if (precioInput) precioInput.value = venta.precio_venta || '';
+                if (formaPagoSelect) formaPagoSelect.value = venta.forma_pago || '';
+                if (estadoPagoSelect) estadoPagoSelect.value = venta.estado_pago || '';
+                if (monedaSelect) monedaSelect.value = venta.moneda || 'G';
+                
+                console.log('Valores asignados al formulario:');
+                console.log('- Vehículo ID:', venta.vehiculo_id);
+                console.log('- Cliente ID:', venta.cliente_id);
+                console.log('- Fecha:', venta.fecha_venta);
+                console.log('- Precio:', venta.precio_venta);
+                console.log('- Forma de pago:', venta.forma_pago);
+                console.log('- Estado de pago:', venta.estado_pago);
+                console.log('- Moneda:', venta.moneda);
+                
+                // Campos de método de pago
+                if (venta.metodo_pago) {
+                    const metodoPagoSelect = document.querySelector('select[name="metodo_pago"]');
+                    if (metodoPagoSelect) {
+                        metodoPagoSelect.value = venta.metodo_pago;
+                        mostrarCamposMetodoPago();
+                        
+                        // Llenar campos específicos del método de pago
+                        if (venta.metodo_pago === 'Transferencia') {
+                            const bancoTransferencia = document.querySelector('input[name="banco_transferencia"]');
+                            const numeroTransferencia = document.querySelector('input[name="numero_transferencia"]');
+                            if (bancoTransferencia) bancoTransferencia.value = venta.banco_transferencia || '';
+                            if (numeroTransferencia) numeroTransferencia.value = venta.numero_transferencia || '';
+                        } else if (venta.metodo_pago === 'Cheque') {
+                            const bancoCheque = document.querySelector('input[name="banco_cheque"]');
+                            const numeroCheque = document.querySelector('input[name="numero_cheque"]');
+                            const fechaCobroCheque = document.querySelector('input[name="fecha_cobro_cheque"]');
+                            if (bancoCheque) bancoCheque.value = venta.banco_cheque || '';
+                            if (numeroCheque) numeroCheque.value = venta.numero_cheque || '';
+                            if (fechaCobroCheque) fechaCobroCheque.value = venta.fecha_cobro_cheque || '';
+                        } else if (venta.metodo_pago === 'Cambio') {
+                            // Llenar campos de cambio de vehículo
+                            const cambioMarca = document.querySelector('input[name="cambio_marca"]');
+                            const cambioModelo = document.querySelector('input[name="cambio_modelo"]');
+                            const cambioAnio = document.querySelector('input[name="cambio_anio"]');
+                            const cambioColor = document.querySelector('input[name="cambio_color"]');
+                            const cambioTipoVehiculo = document.querySelector('select[name="cambio_tipo_vehiculo"]');
+                            const cambioChasis = document.querySelector('input[name="cambio_chasis"]');
+                            const cambioMotor = document.querySelector('input[name="cambio_motor"]');
+                            const cambioPlaca = document.querySelector('input[name="cambio_placa"]');
+                            const cambioKilometraje = document.querySelector('input[name="cambio_kilometraje"]');
+                            const cambioCombustible = document.querySelector('select[name="cambio_combustible"]');
+                            const cambioTransmision = document.querySelector('select[name="cambio_transmision"]');
+                            const cambioEstado = document.querySelector('select[name="cambio_estado"]');
+                            const valorVehiculoCambio = document.querySelector('input[name="valor_vehiculo_cambio"]');
+                            const cambioPrecioVenta = document.querySelector('input[name="cambio_precio_venta"]');
+                            const cambioObservaciones = document.querySelector('textarea[name="cambio_observaciones"]');
+                            const autoRegistrarVehiculo = document.querySelector('input[name="auto_registrar_vehiculo"]');
+                            
+                            if (cambioMarca) cambioMarca.value = venta.cambio_marca || '';
+                            if (cambioModelo) cambioModelo.value = venta.cambio_modelo || '';
+                            if (cambioAnio) cambioAnio.value = venta.cambio_anio || '';
+                            if (cambioColor) cambioColor.value = venta.cambio_color || '';
+                            if (cambioTipoVehiculo) cambioTipoVehiculo.value = venta.cambio_tipo_vehiculo || '';
+                            if (cambioChasis) cambioChasis.value = venta.cambio_chasis || '';
+                            if (cambioMotor) cambioMotor.value = venta.cambio_motor || '';
+                            if (cambioPlaca) cambioPlaca.value = venta.cambio_placa || '';
+                            if (cambioKilometraje) cambioKilometraje.value = venta.cambio_kilometraje || '';
+                            if (cambioCombustible) cambioCombustible.value = venta.cambio_combustible || '';
+                            if (cambioTransmision) cambioTransmision.value = venta.cambio_transmision || '';
+                            if (cambioEstado) cambioEstado.value = venta.cambio_estado || '';
+                            if (valorVehiculoCambio) valorVehiculoCambio.value = venta.valor_vehiculo_cambio || '';
+                            if (cambioPrecioVenta) cambioPrecioVenta.value = venta.cambio_precio_venta || '';
+                            if (cambioObservaciones) cambioObservaciones.value = venta.cambio_observaciones || '';
+                            if (autoRegistrarVehiculo) autoRegistrarVehiculo.checked = venta.auto_registrar_vehiculo || false;
+                            
+                            // Calcular saldo del cambio
+                            if (typeof calcularSaldoCambio === 'function') {
+                                calcularSaldoCambio();
+                            }
+                        } else if (venta.metodo_pago === 'Mixto') {
+                            const montoEfectivo = document.querySelector('input[name="monto_efectivo"]');
+                            const montoDiferencia = document.querySelector('input[name="monto_diferencia"]');
+                            const metodoDiferencia = document.querySelector('select[name="metodo_diferencia"]');
+                            
+                            if (montoEfectivo) montoEfectivo.value = venta.monto_efectivo || '';
+                            if (montoDiferencia) montoDiferencia.value = venta.monto_diferencia || '';
+                            if (metodoDiferencia) metodoDiferencia.value = venta.metodo_diferencia || '';
+                        }
+                    }
+                }
+                
+                // Si es financiamiento, mostrar campos
+                if (venta.forma_pago === 'Financiamiento') {
+                    const entregaInicial = document.getElementById('entregaInicial');
+                    const numeroCuotas = document.getElementById('numeroCuotas');
+                    const fechaPrimerCuota = document.getElementById('fechaPrimerCuota');
+                    
+                    if (entregaInicial) entregaInicial.value = venta.entrega_inicial || '';
+                    if (numeroCuotas) numeroCuotas.value = venta.numero_cuotas || '';
+                    if (fechaPrimerCuota) fechaPrimerCuota.value = venta.fecha_primer_cuota || '';
+                    
+                    toggleFinanciamiento();
+                }
+                
+                // Cambiar moneda si es necesario
+                if (venta.moneda) {
+                    cambiarMoneda(venta.moneda);
+                }
+                
+                // Guardar ID para la actualización
+                document.getElementById('nuevaVentaForm').dataset.editId = id;
+                
+                // Cambiar título del modal
+                const modalTitle = document.querySelector('#nuevaVentaModal .modal-title');
+                if (modalTitle) {
+                    modalTitle.innerHTML = '<i class="fas fa-edit me-2"></i>Editar Venta';
+                }
+                
+                // Cambiar texto del botón
+                const submitButton = document.querySelector('button[onclick="guardarVenta()"]');
+                if (submitButton) {
+                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Actualizar Venta';
+                }
+                
+                // Mostrar modal
+                const modal = new bootstrap.Modal(document.getElementById('nuevaVentaModal'));
+                modal.show();
+                
+                console.log('Modal de edición abierto exitosamente');
+                
+            } catch (error) {
+                console.error('Error al llenar el formulario de edición:', error);
+                alert('Error al cargar los datos de la venta para editar: ' + error.message);
+            }
+        } else {
+            console.error('No se encontró la venta con ID:', id);
+            alert('No se encontró la venta seleccionada. Por favor, recargue la página e intente nuevamente.');
+        }
+    }
+
+    // Función para generar factura
+    function generarFactura(id) {
+        const venta = ventas.find(v => v.id === id);
+        if (venta) {
+            console.log('Generando factura para venta:', venta);
+            // Implementar lógica de generación de factura
+            alert('Función de generación de factura en desarrollo');
+        }
+    }
+
+    // Función para eliminar venta
+    async function eliminarVenta(id) {
+        if (confirm('¿Está seguro de que desea eliminar esta venta? Esta acción no se puede deshacer.')) {
+            try {
+                console.log('Eliminando venta:', id);
+                
+                const response = await fetch(`/api/ventas/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Venta eliminada exitosamente');
+                    // Recargar la lista de ventas y actualizar dashboard
+                    await loadVentas();
+                } else {
+                    alert('Error al eliminar venta: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error eliminando venta:', error);
+                alert('Error al eliminar venta: ' + error.message);
+            }
+        }
+    }
+
+    // Función para aplicar filtros
+    function aplicarFiltros() {
+        filteredVentas = [...ventas];
+        renderVentas();
+    }
+
+    // Función para limpiar filtros
+    function limpiarFiltros() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('estadoFilter').value = '';
+        document.getElementById('pagoFilter').value = '';
+        document.getElementById('fechaDesde').value = '';
+        aplicarFiltros();
+    }
+
+    // Función para exportar ventas
+    function exportarVentas() {
+        alert('Función de exportación en desarrollo');
+    }
+
+    // Función para abrir nueva venta
+    function abrirNuevaVenta() {
+        const modal = new bootstrap.Modal(document.getElementById('nuevaVentaModal'));
+        modal.show();
+    }
+
+    // Funciones para ventas financiadas
+    function toggleFinanciamiento() {
+        const formaPago = document.getElementById('formaPagoSelect').value;
+        const financiamientoFields = document.getElementById('financiamientoFields');
+        
+        if (formaPago === 'Financiamiento') {
+            financiamientoFields.style.display = 'block';
+            // Establecer fecha por defecto si está vacía
+            if (!document.getElementById('fechaPrimerCuota').value) {
+                const today = new Date();
+                const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+                document.getElementById('fechaPrimerCuota').value = nextMonth.toISOString().split('T')[0];
+            }
+            calcularSaldoFinanciado();
+        } else {
+            financiamientoFields.style.display = 'none';
+            // Limpiar campos de financiamiento
+            document.getElementById('entregaInicial').value = '';
+            document.getElementById('numeroCuotas').value = '';
+            document.getElementById('fechaPrimerCuota').value = '';
+            document.getElementById('saldoFinanciado').value = '';
+            document.getElementById('montoCuota').value = '';
+            document.getElementById('resumenCuotas').innerHTML = '<small>Complete los campos para ver el resumen de cuotas</small>';
+            
+            // Limpiar tabla de cuotas
+            document.getElementById('cuotasGeneradasTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        <small>Complete los campos de financiamiento para ver las cuotas</small>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Función para mostrar campos según el método de pago
+    function mostrarCamposMetodoPago() {
+        const metodoPago = document.getElementById('metodoPago').value;
+        const detallesContainer = document.getElementById('detallesMetodoPago');
+        
+        // Ocultar todos los campos primero
+        document.getElementById('camposTransferencia').style.display = 'none';
+        document.getElementById('camposCheque').style.display = 'none';
+        document.getElementById('camposCambio').style.display = 'none';
+        document.getElementById('camposMixto').style.display = 'none';
+        
+        // Mostrar container principal si hay un método seleccionado
+        if (metodoPago && metodoPago !== '') {
+            detallesContainer.style.display = 'block';
+            
+            // Mostrar campos específicos según el método
+            switch (metodoPago) {
+                case 'Transferencia':
+                    document.getElementById('camposTransferencia').style.display = 'block';
+                    break;
+                case 'Cheque':
+                    document.getElementById('camposCheque').style.display = 'block';
+                    break;
+                case 'Cambio':
+                    document.getElementById('camposCambio').style.display = 'block';
+                    break;
+                case 'Mixto':
+                    document.getElementById('camposMixto').style.display = 'block';
+                    break;
+                default:
+                    // Para Efectivo no se necesitan campos adicionales
+                    break;
+            }
+        } else {
+            detallesContainer.style.display = 'none';
+        }
+    }
+
+    // Función para calcular el saldo del cambio de vehículo
+    function calcularSaldoCambio() {
+        const precioVenta = parseFloat(document.querySelector('input[name="precio_venta"]').value) || 0;
+        const valorCambio = parseFloat(document.querySelector('input[name="valor_vehiculo_cambio"]').value) || 0;
+        
+        // Obtener la moneda actual
+        const esGuaranies = monedaActual === 'G';
+        const simboloMoneda = esGuaranies ? 'Gs' : '$';
+        
+        if (precioVenta > 0 && valorCambio > 0) {
+            const saldo = precioVenta - valorCambio;
+            const saldoInput = document.querySelector('input[name="saldo_cambio"]');
+            const saldoSigno = document.getElementById('saldoSigno');
+            const saldoTexto = document.getElementById('saldoTexto');
+            const opcionesSaldo = document.getElementById('opcionesSaldo');
+            
+            // Formatear el saldo según la moneda
+            if (esGuaranies) {
+                saldoInput.value = Math.abs(saldo).toFixed(0); // Sin decimales para guaraníes
+            } else {
+                saldoInput.value = Math.abs(saldo).toFixed(2); // Con decimales para dólares
+            }
+            
+            if (saldo > 0) {
+                // Cliente debe pagar más (vehículo que lleva vale más que el que entrega)
+                saldoSigno.textContent = `+ ${simboloMoneda}`;
+                saldoSigno.className = 'input-group-text bg-warning text-dark';
+                
+                const saldoFormateado = esGuaranies ? 
+                    `Gs ${Math.abs(saldo).toLocaleString('es-PY', {maximumFractionDigits: 0})}` : 
+                    `$ ${Math.abs(saldo).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                saldoTexto.textContent = `El cliente debe pagar ${saldoFormateado} adicionales`;
+                saldoTexto.className = 'text-warning';
+                opcionesSaldo.style.display = 'none';
+            } else if (saldo < 0) {
+                // Cliente debe recibir dinero (vehículo que entrega vale más que el que lleva)
+                saldoSigno.textContent = `- ${simboloMoneda}`;
+                saldoSigno.className = 'input-group-text bg-success text-white';
+                
+                const saldoFormateado = esGuaranies ? 
+                    `Gs ${Math.abs(saldo).toLocaleString('es-PY', {maximumFractionDigits: 0})}` : 
+                    `$ ${Math.abs(saldo).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                saldoTexto.textContent = `El cliente debe recibir ${saldoFormateado}`;
+                saldoTexto.className = 'text-success';
+                opcionesSaldo.style.display = 'block';
+            } else {
+                // Cambio exacto
+                saldoSigno.textContent = simboloMoneda;
+                saldoSigno.className = 'input-group-text bg-primary text-white';
+                saldoTexto.textContent = 'Cambio exacto - No hay diferencia';
+                saldoTexto.className = 'text-primary';
+                opcionesSaldo.style.display = 'none';
+            }
+        } else {
+            document.querySelector('input[name="saldo_cambio"]').value = '';
+            document.getElementById('opcionesSaldo').style.display = 'none';
+        }
+    }
+
+    // Función para mostrar campos específicos según la forma de pago del saldo
+    function mostrarCamposSaldo() {
+        const formaPagoSaldo = document.querySelector('input[name="forma_pago_saldo"]:checked');
+        const camposSaldoDetalle = document.getElementById('camposSaldoDetalle');
+        
+        if (!formaPagoSaldo) {
+            camposSaldoDetalle.style.display = 'none';
+            return;
+        }
+        
+        const tipoSaldo = formaPagoSaldo.value;
+        let campos = '';
+        
+        switch (tipoSaldo) {
+            case 'efectivo':
+                campos = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Cuenta de Efectivo</label>
+                            <select class="form-select form-select-sm" name="cuenta_efectivo_saldo">
+                                <option value="">Seleccionar cuenta...</option>
+                                <option value="1">Caja Principal - Guaraníes</option>
+                                <option value="2">Caja Secundaria - Guaraníes</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Observaciones</label>
+                            <input type="text" class="form-control form-control-sm" name="obs_saldo_efectivo" placeholder="Observaciones del pago">
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'transferencia':
+                campos = `
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Banco</label>
+                            <input type="text" class="form-control form-control-sm" name="banco_saldo_transferencia" placeholder="Nombre del banco">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Nº de Operación</label>
+                            <input type="text" class="form-control form-control-sm" name="numero_saldo_transferencia" placeholder="Número de transferencia">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Cuenta Destino</label>
+                            <select class="form-select form-select-sm" name="cuenta_banco_saldo">
+                                <option value="">Seleccionar cuenta...</option>
+                                <option value="3">Banco Itaú - Cuenta Corriente</option>
+                                <option value="4">Banco Continental - Cuenta Corriente</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'cheque':
+                campos = `
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Banco del Cheque</label>
+                            <input type="text" class="form-control form-control-sm" name="banco_saldo_cheque" placeholder="Banco emisor">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Nº de Cheque</label>
+                            <input type="text" class="form-control form-control-sm" name="numero_saldo_cheque" placeholder="Número de cheque">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Fecha de Emisión</label>
+                            <input type="date" class="form-control form-control-sm" name="fecha_emision_saldo_cheque">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Fecha de Vencimiento</label>
+                            <input type="date" class="form-control form-control-sm" name="fecha_vencimiento_saldo_cheque">
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'financiado':
+                campos = `
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Número de Cuotas</label>
+                            <input type="number" class="form-control form-control-sm" name="cuotas_saldo" min="1" max="60" placeholder="Ej: 12">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Fecha Primera Cuota</label>
+                            <input type="date" class="form-control form-control-sm" name="fecha_primera_cuota_saldo">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Monto por Cuota</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Gs</span>
+                                <input type="number" class="form-control" name="monto_cuota_saldo" readonly style="background-color: #f8f9fa;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'credito':
+                campos = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Plazo para Pago</label>
+                            <select class="form-select form-select-sm" name="plazo_credito_saldo">
+                                <option value="">Seleccionar plazo...</option>
+                                <option value="30">30 días</option>
+                                <option value="60">60 días</option>
+                                <option value="90">90 días</option>
+                                <option value="120">120 días</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Observaciones</label>
+                            <input type="text" class="form-control form-control-sm" name="obs_credito_saldo" placeholder="Condiciones del crédito">
+                        </div>
+                    </div>
+                `;
+                break;
+        }
+        
+        camposSaldoDetalle.innerHTML = campos;
+        camposSaldoDetalle.style.display = 'block';
+    }
+
+    function calcularSaldoFinanciado() {
+        const precioVenta = parseFloat(document.querySelector('input[name="precio_venta"]').value) || 0;
+        const entregaInicial = parseFloat(document.getElementById('entregaInicial').value) || 0;
+        
+        // Validar que la entrega inicial no sea mayor al precio
+        if (entregaInicial > precioVenta) {
+            alert('La entrega inicial no puede ser mayor al precio de venta');
+            document.getElementById('entregaInicial').value = '';
+            document.getElementById('saldoFinanciado').value = '';
+            document.getElementById('montoCuota').value = '';
+            return;
+        }
+        
+        const saldoFinanciado = precioVenta - entregaInicial;
+        document.getElementById('saldoFinanciado').value = saldoFinanciado.toFixed(2);
+        calcularMontoCuota();
+    }
+
+    function calcularMontoCuota() {
+        const saldoFinanciado = parseFloat(document.getElementById('saldoFinanciado').value) || 0;
+        const numeroCuotas = parseInt(document.getElementById('numeroCuotas').value) || 0;
+        
+        if (numeroCuotas > 0 && saldoFinanciado > 0) {
+            const montoCuota = saldoFinanciado / numeroCuotas;
+            document.getElementById('montoCuota').value = montoCuota.toFixed(2);
+            actualizarResumenCuotas();
+        } else {
+            document.getElementById('montoCuota').value = '';
+            document.getElementById('resumenCuotas').innerHTML = '<small>Complete los campos para ver el resumen de cuotas</small>';
+        }
+    }
+
+    function actualizarResumenCuotas() {
+        const saldoFinanciado = parseFloat(document.getElementById('saldoFinanciado').value) || 0;
+        const numeroCuotas = parseInt(document.getElementById('numeroCuotas').value) || 0;
+        const montoCuota = parseFloat(document.getElementById('montoCuota').value) || 0;
+        const fechaPrimerCuota = document.getElementById('fechaPrimerCuota').value;
+        
+        const resumenDiv = document.getElementById('resumenCuotas');
+        
+        if (numeroCuotas > 0 && fechaPrimerCuota && saldoFinanciado > 0) {
+            // Calcular fecha de última cuota
+            const fechaPrimera = new Date(fechaPrimerCuota);
+            const fechaUltima = new Date(fechaPrimera);
+            fechaUltima.setMonth(fechaUltima.getMonth() + numeroCuotas - 1);
+            
+            resumenDiv.innerHTML = `
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-money-bill-wave text-success me-2"></i>
+                            <div>
+                                <small class="text-muted d-block">Saldo Financiado</small>
+                                <strong class="text-success">${formatearMoneda(saldoFinanciado)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-list-ol text-info me-2"></i>
+                            <div>
+                                <small class="text-muted d-block">N° Cuotas</small>
+                                <strong class="text-info">${numeroCuotas}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2 mt-2">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-credit-card text-danger me-2"></i>
+                            <div>
+                                <small class="text-muted d-block">Monto por Cuota</small>
+                                <strong class="text-danger">${formatearMoneda(montoCuota)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar text-warning me-2"></i>
+                            <div>
+                                <small class="text-muted d-block">Primera Cuota</small>
+                                <strong class="text-warning">${fechaPrimerCuota}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2 mt-2">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-times text-danger me-2"></i>
+                            <div>
+                                <small class="text-muted d-block">Última Cuota</small>
+                                <strong class="text-danger">${fechaUltima.toISOString().split('T')[0]}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Generar preview de cuotas
+            generarCuotasPreview(saldoFinanciado, numeroCuotas, montoCuota, fechaPrimerCuota);
+        } else {
+            resumenDiv.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>Complete los campos para ver el resumen de cuotas</small>';
+            // Limpiar tabla de cuotas
+            document.getElementById('cuotasGeneradasTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        <small><i class="fas fa-info-circle me-1"></i>Complete los campos de financiamiento para ver las cuotas</small>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function generarCuotasPreview(saldoFinanciado, numeroCuotas, montoCuota, fechaPrimerCuota) {
+        const tbody = document.getElementById('cuotasGeneradasTableBody');
+        tbody.innerHTML = '';
+        
+        // Calcular monto ajustado para la última cuota
+        const montoUltimaCuota = saldoFinanciado - (montoCuota * (numeroCuotas - 1));
+        
+        let fechaActual = new Date(fechaPrimerCuota);
+        
+        for (let i = 1; i <= numeroCuotas; i++) {
+            const monto = i === numeroCuotas ? montoUltimaCuota : montoCuota;
+            const fechaVencimiento = new Date(fechaActual);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-center">
+                    <span class="badge bg-primary rounded-pill">${i}</span>
+                </td>
+                <td class="text-center">
+                    <strong class="text-success">${formatearMoneda(monto)}</strong>
+                </td>
+                <td class="text-center">
+                    <span class="text-info">${fechaVencimiento.toISOString().split('T')[0]}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-clock me-1"></i>Pendiente
+                    </span>
+                </td>
+            `;
+            tbody.appendChild(row);
+            
+            // Avanzar al siguiente mes
+            fechaActual.setMonth(fechaActual.getMonth() + 1);
+        }
+    }
+
+    // Función para ver cuotas de una venta
+    async function verCuotas(ventaId) {
+        try {
+            const response = await fetch(`/api/cuotas/${ventaId}`);
+            const cuotas = await response.json();
+            
+            const venta = ventas.find(v => v.id === ventaId);
+            
+            // Mostrar información de la venta de forma compacta
+            document.getElementById('infoVenta').innerHTML = `
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-car text-primary me-2"></i>
+                        <span class="small text-muted">Vehículo:</span>
+                        <span class="ms-2 fw-bold">${venta.vehiculo_marca} ${venta.vehiculo_modelo}</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-user text-info me-2"></i>
+                        <span class="small text-muted">Cliente:</span>
+                        <span class="ms-2 fw-bold">${venta.cliente_nombre}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-dollar-sign text-success me-2"></i>
+                        <span class="small text-muted">Total:</span>
+                        <span class="ms-2 fw-bold text-success">G ${venta.precio_venta.toLocaleString()}</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-hand-holding-usd text-warning me-2"></i>
+                        <span class="small text-muted">Entrega:</span>
+                        <span class="ms-2 fw-bold text-warning">G ${venta.entrega_inicial.toLocaleString()}</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-credit-card text-primary me-2"></i>
+                        <span class="small text-muted">Financiado:</span>
+                        <span class="ms-2 fw-bold text-primary">G ${venta.saldo_financiado.toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar resumen de pagos compacto
+            const cuotasPagadas = cuotas.filter(c => c.estado === 'Pagada').length;
+            const totalCuotas = cuotas.length;
+            const montoPagado = cuotas.reduce((sum, c) => sum + c.monto_pagado, 0);
+            const porcentajePagado = totalCuotas > 0 ? Math.round((cuotasPagadas / totalCuotas) * 100) : 0;
+            
+            document.getElementById('resumenPagos').innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Progreso:</span>
+                    <span class="badge bg-success">${cuotasPagadas}/${totalCuotas}</span>
+                </div>
+                <div class="progress mb-2" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: ${porcentajePagado}%"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Pagado:</span>
+                    <span class="fw-bold text-success">G ${montoPagado.toLocaleString()}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Pendiente:</span>
+                    <span class="fw-bold text-danger">G ${(venta.saldo_financiado - montoPagado).toLocaleString()}</span>
+                </div>
+            `;
+            
+            // Renderizar tabla de cuotas
+            const tbody = document.getElementById('cuotasTableBody');
+            tbody.innerHTML = '';
+            
+            cuotas.forEach(cuota => {
+                // Calcular días restantes
+                const fechaVencimiento = new Date(cuota.fecha_vencimiento);
+                const hoy = new Date();
+                const diasRestantes = Math.ceil((fechaVencimiento - hoy) / (1000 * 60 * 60 * 24));
+                
+                // Determinar clase de estado y días restantes
+                let estadoClass = 'badge-success';
+                let diasClass = 'text-success';
+                let diasText = '';
+                
+                if (cuota.estado === 'Pagada') {
+                    estadoClass = 'badge-success';
+                    diasText = 'Pagada';
+                } else if (diasRestantes < 0) {
+                    estadoClass = 'badge-danger';
+                    diasClass = 'text-danger';
+                    diasText = `Vencida (${Math.abs(diasRestantes)} días)`;
+                } else if (diasRestantes <= 7) {
+                    estadoClass = 'badge-warning';
+                    diasClass = 'text-warning';
+                    diasText = `${diasRestantes} días`;
+                } else {
+                    estadoClass = 'badge-info';
+                    diasClass = 'text-info';
+                    diasText = `${diasRestantes} días`;
+                }
+                
+                const row = document.createElement('tr');
+                row.className = cuota.estado === 'Pagada' ? 'table-success' : '';
+                row.innerHTML = `
+                    <td class="text-center align-middle">
+                        <span class="badge bg-secondary rounded-pill">${cuota.numero_cuota}</span>
+                    </td>
+                    <td class="text-center align-middle">
+                        <span class="fw-bold text-primary">G ${cuota.monto.toLocaleString()}</span>
+                    </td>
+                    <td class="text-center align-middle">
+                        <small class="text-muted">${cuota.fecha_vencimiento}</small>
+                    </td>
+                    <td class="text-center align-middle">
+                        <span class="badge ${diasClass === 'text-danger' ? 'bg-danger' : diasClass === 'text-warning' ? 'bg-warning' : 'bg-info'} rounded-pill">
+                            <i class="fas ${diasRestantes < 0 ? 'fa-exclamation-triangle' : diasRestantes <= 7 ? 'fa-clock' : 'fa-calendar'} me-1"></i>
+                            ${diasText}
+                        </span>
+                    </td>
+                    <td class="text-center align-middle">
+                        <span class="badge ${estadoClass === 'badge-success' ? 'bg-success' : 'bg-warning'} rounded-pill">
+                            <i class="fas ${cuota.estado === 'Pagada' ? 'fa-check-circle' : 'fa-clock'} me-1"></i>
+                            ${cuota.estado}
+                        </span>
+                    </td>
+                    <td class="text-center align-middle">
+                        <small class="text-muted">${cuota.fecha_pago || '-'}</small>
+                    </td>
+                    <td class="text-center align-middle">
+                        ${cuota.estado === 'Pendiente' ? 
+                            `<button class="btn btn-success btn-sm rounded-pill" onclick="pagarCuota(${cuota.id})" title="Pagar cuota">
+                                <i class="fas fa-check me-1"></i>Pagar
+                            </button>` : 
+                            `<div class="d-flex align-items-center justify-content-center">
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-check-circle me-1"></i>Pagada
+                                </span>
+                                <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="deshacerPagoCuota(${cuota.id})" title="Eliminar pago">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('cuotasModal'));
+            document.getElementById('cuotasModal').dataset.ventaId = ventaId;
+            modal.show();
+            
+        } catch (error) {
+            console.error('Error cargando cuotas:', error);
+            alert('Error al cargar las cuotas');
+        }
+    }
+
+    // Función para pagar una cuota
+    async function pagarCuota(cuotaId) {
+        if (confirm('¿Confirmar el pago de esta cuota?')) {
+            try {
+                const response = await fetch(`/api/cuotas/${cuotaId}/pagar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Cuota pagada exitosamente');
+                    // Recargar cuotas
+                    const ventaId = document.querySelector('#cuotasModal').dataset.ventaId;
+                    verCuotas(parseInt(ventaId));
+                }
+            } catch (error) {
+                console.error('Error pagando cuota:', error);
+                alert('Error al pagar la cuota');
+            }
+        }
+    }
+
+    // Función para deshacer el pago de una cuota
+    async function deshacerPagoCuota(cuotaId) {
+        if (confirm('¿Está seguro de que desea eliminar este pago? Esta acción no se puede deshacer.')) {
+            try {
+                const response = await fetch(`/api/cuotas/${cuotaId}/deshacer-pago`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Pago eliminado exitosamente');
+                    // Recargar cuotas
+                    const ventaId = document.querySelector('#cuotasModal').dataset.ventaId;
+                    verCuotas(parseInt(ventaId));
+                } else {
+                    alert('Error: ' + (result.error || 'No se pudo eliminar el pago'));
+                }
+            } catch (error) {
+                console.error('Error eliminando pago:', error);
+                alert('Error al eliminar el pago');
+            }
+        }
+    }
+
+    // Event listeners para filtros
+    document.getElementById('searchInput').addEventListener('input', filterVentas);
+    document.getElementById('estadoFilter').addEventListener('change', filterVentas);
+    document.getElementById('pagoFilter').addEventListener('change', filterVentas);
+    document.getElementById('fechaDesde').addEventListener('change', filterVentas);
+
+    // Event listeners para campos de financiamiento
+    document.getElementById('entregaInicial').addEventListener('input', calcularSaldoFinanciado);
+    document.getElementById('numeroCuotas').addEventListener('input', calcularMontoCuota);
+    document.getElementById('fechaPrimerCuota').addEventListener('change', actualizarResumenCuotas);
+    
+    // Event listeners adicionales para actualizar cuotas en tiempo real
+    document.getElementById('numeroCuotas').addEventListener('change', actualizarResumenCuotas);
+    document.getElementById('entregaInicial').addEventListener('change', actualizarResumenCuotas);
+
+    // Función para filtrar ventas
+    function filterVentas() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const estadoFilter = document.getElementById('estadoFilter').value;
+        const formaPagoFilter = document.getElementById('pagoFilter').value;
+        const fechaDesde = document.getElementById('fechaDesde').value;
+
+        filteredVentas = ventas.filter(venta => {
+            const matchesSearch = !searchTerm || 
+                venta.vehiculo_marca.toLowerCase().includes(searchTerm) ||
+                venta.vehiculo_modelo.toLowerCase().includes(searchTerm) ||
+                venta.cliente_nombre.toLowerCase().includes(searchTerm);
+            
+            const matchesEstado = !estadoFilter || venta.estado_pago === estadoFilter;
+            const matchesFormaPago = !formaPagoFilter || venta.forma_pago === formaPagoFilter;
+            const matchesFechaDesde = !fechaDesde || venta.fecha_venta >= fechaDesde;
+
+            return matchesSearch && matchesEstado && matchesFormaPago && matchesFechaDesde;
+        });
+
+        renderVentas();
+    }
+</script>
+{% endblock %} 

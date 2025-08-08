@@ -1,0 +1,647 @@
+{% extends "base.html" %}
+
+{% block title %}Contabilidad - Reportes y Balances{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Contabilidad</h5>
+                        <div>
+                            <button class="btn btn-success me-2" onclick="generarBalance()">
+                                <i class="fas fa-chart-bar me-2"></i>Balance General
+                            </button>
+                            <button class="btn btn-primary" onclick="generarReporte()">
+                                <i class="fas fa-file-alt me-2"></i>Reporte Mensual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="ingresosTotales">₲ 0</h3>
+                        <p>Ingresos Totales</p>
+                    </div>
+                    <i class="fas fa-arrow-up fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="gastosTotales">₲ 0</h3>
+                        <p>Gastos Totales</p>
+                    </div>
+                    <i class="fas fa-arrow-down fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="utilidadNeta">₲ 0</h3>
+                        <p>Utilidad Neta</p>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="margenUtilidad">0%</h3>
+                        <p>Margen de Utilidad</p>
+                    </div>
+                    <i class="fas fa-percentage fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Flujo de Caja</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="flujoCajaChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Distribución de Gastos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="gastosChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Row -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Últimas Transacciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Concepto</th>
+                                    <th>Tipo</th>
+                                    <th>Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaccionesTableBody">
+                                <!-- Se llenará dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen Mensual</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">Ventas del Mes</h6>
+                                <h4 class="text-success" id="ventasMes">₲ 0</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">Gastos del Mes</h6>
+                                <h4 class="text-danger" id="gastosMes">₲ 0</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">Utilidad del Mes</h6>
+                                <h4 class="text-primary" id="utilidadMes">₲ 0</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">Promedio Diario</h6>
+                                <h4 class="text-info" id="promedioDiario">₲ 0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Balance General -->
+<div class="modal fade" id="balanceGeneralModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-chart-bar me-2"></i>Balance General</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Activos</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Efectivo en Caja</td>
+                                <td class="text-end" id="efectivoCaja">₲ 0</td>
+                            </tr>
+                            <tr>
+                                <td>Cuentas por Cobrar</td>
+                                <td class="text-end" id="cuentasCobrar">₲ 0</td>
+                            </tr>
+                            <tr>
+                                <td>Inventario de Vehículos</td>
+                                <td class="text-end" id="inventarioVehiculos">₲ 0</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td><strong>Total Activos</strong></td>
+                                <td class="text-end"><strong id="totalActivos">₲ 0</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Pasivos y Patrimonio</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Cuentas por Pagar</td>
+                                <td class="text-end" id="cuentasPagar">₲ 0</td>
+                            </tr>
+                            <tr>
+                                <td>Capital Inicial</td>
+                                <td class="text-end" id="capitalInicial">₲ 0</td>
+                            </tr>
+                            <tr>
+                                <td>Utilidades Retenidas</td>
+                                <td class="text-end" id="utilidadesRetenidas">₲ 0</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td><strong>Total Pasivos y Patrimonio</strong></td>
+                                <td class="text-end"><strong id="totalPasivosPatrimonio">₲ 0</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirBalance()">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reporte Mensual -->
+<div class="modal fade" id="reporteMensualModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Reporte Mensual</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Mes</label>
+                        <select class="form-select" id="mesReporte">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Año</label>
+                        <select class="form-select" id="añoReporte">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Resumen de Ventas</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Total Ventas</td>
+                                <td class="text-end" id="totalVentasReporte">0</td>
+                            </tr>
+                            <tr>
+                                <td>Ingresos Totales</td>
+                                <td class="text-end" id="ingresosTotalesReporte">₲ 0</td>
+                            </tr>
+                            <tr>
+                                <td>Promedio por Venta</td>
+                                <td class="text-end" id="promedioVentaReporte">₲ 0</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Resumen de Gastos</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Total Gastos</td>
+                                <td class="text-end" id="totalGastosReporte">0</td>
+                            </tr>
+                            <tr>
+                                <td>Monto Total</td>
+                                <td class="text-end" id="montoGastosReporte">₲ 0</td>
+                            </tr>
+                            <tr>
+                                <td>Promedio por Gasto</td>
+                                <td class="text-end" id="promedioGastoReporte">₲ 0</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Análisis de Rentabilidad</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Utilidad Bruta</h6>
+                                    <h4 class="text-success" id="utilidadBrutaReporte">₲ 0</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Margen de Utilidad</h6>
+                                    <h4 class="text-primary" id="margenUtilidadReporte">0%</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted">ROI</h6>
+                                    <h4 class="text-info" id="roiReporte">0%</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="generarReporteMensual()">
+                    <i class="fas fa-sync me-2"></i>Generar
+                </button>
+                <button type="button" class="btn btn-success" onclick="imprimirReporte()">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let ventas = [];
+let gastos = [];
+let movimientosCaja = [];
+
+// Cargar datos contables
+async function loadContabilidadData() {
+    try {
+        // Cargar ventas
+        const ventasResponse = await fetch('/api/ventas');
+        ventas = await ventasResponse.json();
+
+        // Cargar gastos
+        const gastosResponse = await fetch('/api/gastos');
+        gastos = await gastosResponse.json();
+
+        // Cargar movimientos de caja
+        const cajaResponse = await fetch('/api/caja');
+        movimientosCaja = await cajaResponse.json();
+
+        updateStatistics();
+        renderTransacciones();
+        generarGraficos();
+        
+    } catch (error) {
+        console.error('Error cargando datos contables:', error);
+    }
+}
+
+// Actualizar estadísticas
+function updateStatistics() {
+    const ingresosTotales = ventas.reduce((total, v) => total + v.precio_venta, 0);
+    const gastosTotales = gastos.reduce((total, g) => total + g.monto, 0);
+    const utilidadNeta = ingresosTotales - gastosTotales;
+    const margenUtilidad = ingresosTotales > 0 ? (utilidadNeta / ingresosTotales) * 100 : 0;
+
+    document.getElementById('ingresosTotales').textContent = `₲ ${ingresosTotales.toLocaleString()}`;
+    document.getElementById('gastosTotales').textContent = `₲ ${gastosTotales.toLocaleString()}`;
+    document.getElementById('utilidadNeta').textContent = `₲ ${utilidadNeta.toLocaleString()}`;
+    document.getElementById('margenUtilidad').textContent = `${margenUtilidad.toFixed(1)}%`;
+
+    // Actualizar resumen mensual
+    const mesActual = new Date().getMonth() + 1;
+    const añoActual = new Date().getFullYear();
+    
+    const ventasMes = ventas.filter(v => {
+        const fecha = new Date(v.fecha_venta);
+        return fecha.getMonth() + 1 === mesActual && fecha.getFullYear() === añoActual;
+    });
+    
+    const gastosMes = gastos.filter(g => {
+        const fecha = new Date(g.fecha);
+        return fecha.getMonth() + 1 === mesActual && fecha.getFullYear() === añoActual;
+    });
+
+    const ingresosMes = ventasMes.reduce((total, v) => total + v.precio_venta, 0);
+    const gastosMesTotal = gastosMes.reduce((total, g) => total + g.monto, 0);
+    const utilidadMes = ingresosMes - gastosMesTotal;
+    const promedioDiario = ingresosMes / new Date(añoActual, mesActual, 0).getDate();
+
+    document.getElementById('ventasMes').textContent = `₲ ${ingresosMes.toLocaleString()}`;
+    document.getElementById('gastosMes').textContent = `₲ ${gastosMesTotal.toLocaleString()}`;
+    document.getElementById('utilidadMes').textContent = `₲ ${utilidadMes.toLocaleString()}`;
+    document.getElementById('promedioDiario').textContent = `₲ ${promedioDiario.toLocaleString()}`;
+}
+
+// Renderizar transacciones
+function renderTransacciones() {
+    const tbody = document.getElementById('transaccionesTableBody');
+    tbody.innerHTML = '';
+
+    // Combinar ventas y gastos
+    const transacciones = [];
+    
+    ventas.forEach(venta => {
+        transacciones.push({
+            fecha: venta.fecha_venta,
+            concepto: `Venta - ${venta.vehiculo_marca} ${venta.vehiculo_modelo}`,
+            tipo: 'Ingreso',
+            monto: venta.precio_venta
+        });
+    });
+
+    gastos.forEach(gasto => {
+        transacciones.push({
+            fecha: gasto.fecha,
+            concepto: gasto.concepto,
+            tipo: 'Gasto',
+            monto: gasto.monto
+        });
+    });
+
+    // Ordenar por fecha (más recientes primero)
+    transacciones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // Mostrar solo las últimas 10
+    transacciones.slice(0, 10).forEach(trans => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${trans.fecha}</td>
+            <td>${trans.concepto}</td>
+            <td>
+                <span class="badge ${trans.tipo === 'Ingreso' ? 'badge-success' : 'badge-danger'}">
+                    ${trans.tipo}
+                </span>
+            </td>
+            <td class="text-end">₲ ${trans.monto.toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Generar gráficos
+function generarGraficos() {
+    // Gráfico de flujo de caja
+    const flujoCtx = document.getElementById('flujoCajaChart').getContext('2d');
+    
+    // Agrupar datos por mes
+    const datosPorMes = {};
+    ventas.forEach(venta => {
+        const fecha = new Date(venta.fecha_venta);
+        const mes = `${fecha.getFullYear()}-${fecha.getMonth() + 1}`;
+        if (!datosPorMes[mes]) {
+            datosPorMes[mes] = { ingresos: 0, gastos: 0 };
+        }
+        datosPorMes[mes].ingresos += venta.precio_venta;
+    });
+
+    gastos.forEach(gasto => {
+        const fecha = new Date(gasto.fecha);
+        const mes = `${fecha.getFullYear()}-${fecha.getMonth() + 1}`;
+        if (!datosPorMes[mes]) {
+            datosPorMes[mes] = { ingresos: 0, gastos: 0 };
+        }
+        datosPorMes[mes].gastos += gasto.monto;
+    });
+
+    const meses = Object.keys(datosPorMes).sort();
+    const ingresos = meses.map(mes => datosPorMes[mes].ingresos);
+    const gastos = meses.map(mes => datosPorMes[mes].gastos);
+
+    new Chart(flujoCtx, {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [
+                {
+                    label: 'Ingresos',
+                    data: ingresos,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Gastos',
+                    data: gastos,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Gráfico de distribución de gastos
+    const gastosCtx = document.getElementById('gastosChart').getContext('2d');
+    
+    const categoriasGastos = {};
+    gastos.forEach(gasto => {
+        const categoria = gasto.categoria || 'Otros';
+        if (!categoriasGastos[categoria]) {
+            categoriasGastos[categoria] = 0;
+        }
+        categoriasGastos[categoria] += gasto.monto;
+    });
+
+    new Chart(gastosCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(categoriasGastos),
+            datasets: [{
+                data: Object.values(categoriasGastos),
+                backgroundColor: [
+                    '#2563eb',
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#8b5cf6',
+                    '#06b6d4'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Generar balance general
+function generarBalance() {
+    const ingresosTotales = ventas.reduce((total, v) => total + v.precio_venta, 0);
+    const gastosTotales = gastos.reduce((total, g) => total + g.monto, 0);
+    const utilidadNeta = ingresosTotales - gastosTotales;
+
+    // Calcular activos
+    const efectivoCaja = movimientosCaja.reduce((total, mov) => {
+        return total + (mov.tipo_movimiento === 'Ingreso' ? mov.monto : -mov.monto);
+    }, 0);
+
+    const vehiculosDisponibles = ventas.filter(v => v.vehiculo && v.vehiculo.estado === 'Disponible');
+    const inventarioVehiculos = vehiculosDisponibles.reduce((total, v) => total + (v.vehiculo.precio_compra || 0), 0);
+
+    // Llenar balance
+    document.getElementById('efectivoCaja').textContent = `₲ ${efectivoCaja.toLocaleString()}`;
+    document.getElementById('cuentasCobrar').textContent = '₲ 0'; // Implementar según necesidad
+    document.getElementById('inventarioVehiculos').textContent = `₲ ${inventarioVehiculos.toLocaleString()}`;
+    document.getElementById('totalActivos').textContent = `₲ ${(efectivoCaja + inventarioVehiculos).toLocaleString()}`;
+
+    document.getElementById('cuentasPagar').textContent = '₲ 0'; // Implementar según necesidad
+    document.getElementById('capitalInicial').textContent = '₲ 0'; // Implementar según necesidad
+    document.getElementById('utilidadesRetenidas').textContent = `₲ ${utilidadNeta.toLocaleString()}`;
+    document.getElementById('totalPasivosPatrimonio').textContent = `₲ ${utilidadNeta.toLocaleString()}`;
+
+    openModal('balanceGeneralModal');
+}
+
+// Generar reporte
+function generarReporte() {
+    openModal('reporteMensualModal');
+}
+
+// Generar reporte mensual
+function generarReporteMensual() {
+    const mes = parseInt(document.getElementById('mesReporte').value);
+    const año = parseInt(document.getElementById('añoReporte').value);
+
+    const ventasMes = ventas.filter(v => {
+        const fecha = new Date(v.fecha_venta);
+        return fecha.getMonth() + 1 === mes && fecha.getFullYear() === año;
+    });
+
+    const gastosMes = gastos.filter(g => {
+        const fecha = new Date(g.fecha);
+        return fecha.getMonth() + 1 === mes && fecha.getFullYear() === año;
+    });
+
+    const ingresosMes = ventasMes.reduce((total, v) => total + v.precio_venta, 0);
+    const gastosMesTotal = gastosMes.reduce((total, g) => total + g.monto, 0);
+    const utilidadBruta = ingresosMes - gastosMesTotal;
+    const margenUtilidad = ingresosMes > 0 ? (utilidadBruta / ingresosMes) * 100 : 0;
+    const roi = gastosMesTotal > 0 ? (utilidadBruta / gastosMesTotal) * 100 : 0;
+
+    document.getElementById('totalVentasReporte').textContent = ventasMes.length;
+    document.getElementById('ingresosTotalesReporte').textContent = `₲ ${ingresosMes.toLocaleString()}`;
+    document.getElementById('promedioVentaReporte').textContent = ventasMes.length > 0 ? 
+        `₲ ${(ingresosMes / ventasMes.length).toLocaleString()}` : '₲ 0';
+
+    document.getElementById('totalGastosReporte').textContent = gastosMes.length;
+    document.getElementById('montoGastosReporte').textContent = `₲ ${gastosMesTotal.toLocaleString()}`;
+    document.getElementById('promedioGastoReporte').textContent = gastosMes.length > 0 ? 
+        `₲ ${(gastosMesTotal / gastosMes.length).toLocaleString()}` : '₲ 0';
+
+    document.getElementById('utilidadBrutaReporte').textContent = `₲ ${utilidadBruta.toLocaleString()}`;
+    document.getElementById('margenUtilidadReporte').textContent = `${margenUtilidad.toFixed(1)}%`;
+    document.getElementById('roiReporte').textContent = `${roi.toFixed(1)}%`;
+}
+
+// Imprimir balance
+function imprimirBalance() {
+    window.print();
+}
+
+// Imprimir reporte
+function imprimirReporte() {
+    window.print();
+}
+
+// Abrir modal
+function openModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadContabilidadData();
+});
+</script>
+{% endblock %} 

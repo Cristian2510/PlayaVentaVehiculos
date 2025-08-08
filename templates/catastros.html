@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+
+{% block title %}Catastros - Gestión de Vehículos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Catastros de Vehículos</h5>
+                        <button class="btn btn-primary" onclick="openModal('nuevoVehiculoModal')">
+                            <i class="fas fa-plus me-2"></i>Nuevo Vehículo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Marca, modelo, placa...">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="estadoFilter">
+                                <option value="">Todos</option>
+                                <option value="Disponible">Disponible</option>
+                                <option value="Vendido">Vendido</option>
+                                <option value="En reparación">En reparación</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="tipoFilter">
+                                <option value="">Todos</option>
+                                <option value="Automóvil">Automóvil</option>
+                                <option value="Camioneta">Camioneta</option>
+                                <option value="Camión">Camión</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Combustible</label>
+                            <select class="form-select" id="combustibleFilter">
+                                <option value="">Todos</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                            <button class="btn btn-secondary me-2" onclick="clearFilters()">
+                                <i class="fas fa-times me-2"></i>Limpiar
+                            </button>
+                            <button class="btn btn-primary" onclick="exportToExcel()">
+                                <i class="fas fa-download me-2"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicles Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="vehiculosTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Año</th>
+                                    <th>Color</th>
+                                    <th>Placa</th>
+                                    <th>Chasis</th>
+                                    <th>Precio Compra</th>
+                                    <th>Precio Venta</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehiculosTableBody">
+                                <!-- Se llenará dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Vehículo -->
+<div class="modal fade" id="nuevoVehiculoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-car me-2"></i>Nuevo Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevoVehiculoForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marca *</label>
+                            <input type="text" class="form-control" name="marca" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Modelo *</label>
+                            <input type="text" class="form-control" name="modelo" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Año *</label>
+                            <input type="number" class="form-control" name="año" min="1900" max="2030" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Color *</label>
+                            <input type="text" class="form-control" name="color" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tipo de Vehículo</label>
+                            <select class="form-select" name="tipo_vehiculo">
+                                <option value="">Seleccionar...</option>
+                                <option value="Automóvil">Automóvil</option>
+                                <option value="Camioneta">Camioneta</option>
+                                <option value="Camión">Camión</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Chasis *</label>
+                            <input type="text" class="form-control" name="chasis" maxlength="17" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Motor *</label>
+                            <input type="text" class="form-control" name="motor" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" name="placa" maxlength="10">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Kilometraje</label>
+                            <input type="number" class="form-control" name="kilometraje" min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Combustible</label>
+                            <select class="form-select" name="combustible">
+                                <option value="">Seleccionar...</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Precio de Compra *</label>
+                            <input type="number" class="form-control" name="precio_compra" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transmisión</label>
+                            <select class="form-select" name="transmision">
+                                <option value="">Seleccionar...</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automático">Automático</option>
+                                <option value="CVT">CVT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarVehiculo()">
+                    <i class="fas fa-save me-2"></i>Guardar Vehículo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Vehículo -->
+<div class="modal fade" id="editarVehiculoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editarVehiculoForm">
+                    <input type="hidden" name="id" id="editVehiculoId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marca *</label>
+                            <input type="text" class="form-control" name="marca" id="editMarca" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Modelo *</label>
+                            <input type="text" class="form-control" name="modelo" id="editModelo" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Año *</label>
+                            <input type="number" class="form-control" name="año" id="editAño" min="1900" max="2030" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Color *</label>
+                            <input type="text" class="form-control" name="color" id="editColor" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" name="estado" id="editEstado">
+                                <option value="Disponible">Disponible</option>
+                                <option value="Vendido">Vendido</option>
+                                <option value="En reparación">En reparación</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Chasis *</label>
+                            <input type="text" class="form-control" name="chasis" id="editChasis" maxlength="17" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Motor *</label>
+                            <input type="text" class="form-control" name="motor" id="editMotor" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" name="placa" id="editPlaca" maxlength="10">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="col-md-4 mb-3">
+                                <label class="form-label">Kilometraje</label>
+                                <input type="number" class="form-control" name="kilometraje" id="editKilometraje" min="0">
+                            </label>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Precio de Venta</label>
+                            <input type="number" class="form-control" name="precio_venta" id="editPrecioVenta" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Combustible</label>
+                            <select class="form-select" name="combustible" id="editCombustible">
+                                <option value="">Seleccionar...</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transmisión</label>
+                            <select class="form-select" name="transmision" id="editTransmision">
+                                <option value="">Seleccionar...</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automático">Automático</option>
+                                <option value="CVT">CVT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" id="editObservaciones" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="actualizarVehiculo()">
+                    <i class="fas fa-save me-2"></i>Actualizar Vehículo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Detalles -->
+<div class="modal fade" id="verDetallesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles del Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información Básica</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>ID:</strong></td><td id="detalleId"></td></tr>
+                            <tr><td><strong>Marca:</strong></td><td id="detalleMarca"></td></tr>
+                            <tr><td><strong>Modelo:</strong></td><td id="detalleModelo"></td></tr>
+                            <tr><td><strong>Año:</strong></td><td id="detalleAño"></td></tr>
+                            <tr><td><strong>Color:</strong></td><td id="detalleColor"></td></tr>
+                            <tr><td><strong>Estado:</strong></td><td id="detalleEstado"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Información Técnica</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Chasis:</strong></td><td id="detalleChasis"></td></tr>
+                            <tr><td><strong>Motor:</strong></td><td id="detalleMotor"></td></tr>
+                            <tr><td><strong>Placa:</strong></td><td id="detallePlaca"></td></tr>
+                            <tr><td><strong>Kilometraje:</strong></td><td id="detalleKilometraje"></td></tr>
+                            <tr><td><strong>Combustible:</strong></td><td id="detalleCombustible"></td></tr>
+                            <tr><td><strong>Transmisión:</strong></td><td id="detalleTransmision"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6>Información Económica</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Precio Compra:</strong></td><td id="detallePrecioCompra"></td></tr>
+                            <tr><td><strong>Precio Venta:</strong></td><td id="detallePrecioVenta"></td></tr>
+                            <tr><td><strong>Fecha Ingreso:</strong></td><td id="detalleFechaIngreso"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Observaciones</h6>
+                        <p id="detalleObservaciones" class="text-muted"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let vehiculos = [];
+let vehiculosFiltrados = [];
+
+// Cargar vehículos
+async function loadVehiculos() {
+    try {
+        const response = await fetch('/api/vehiculos');
+        vehiculos = await response.json();
+        vehiculosFiltrados = [...vehiculos];
+        renderVehiculos();
+    } catch (error) {
+        console.error('Error cargando vehículos:', error);
+    }
+}
+
+// Renderizar tabla de vehículos
+function renderVehiculos() {
+    const tbody = document.getElementById('vehiculosTableBody');
+    tbody.innerHTML = '';
+
+    vehiculosFiltrados.forEach(vehiculo => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${vehiculo.id}</td>
+            <td>${vehiculo.marca}</td>
+            <td>${vehiculo.modelo}</td>
+            <td>${vehiculo.año}</td>
+            <td>${vehiculo.color}</td>
+            <td>${vehiculo.placa || '-'}</td>
+            <td>${vehiculo.chasis}</td>
+            <td>₲ ${vehiculo.precio_compra?.toLocaleString() || '0'}</td>
+            <td>₲ ${vehiculo.precio_venta?.toLocaleString() || '-'}</td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(vehiculo.estado)}">
+                    ${vehiculo.estado}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="verDetalles(${vehiculo.id})" title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editarVehiculo(${vehiculo.id})" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarVehiculo(${vehiculo.id})" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Obtener clase de badge según estado
+function getEstadoBadgeClass(estado) {
+    switch(estado) {
+        case 'Disponible': return 'badge-success';
+        case 'Vendido': return 'badge-danger';
+        case 'En reparación': return 'badge-warning';
+        default: return 'badge-secondary';
+    }
+}
+
+// Filtros
+function aplicarFiltros() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const estadoFilter = document.getElementById('estadoFilter').value;
+    const tipoFilter = document.getElementById('tipoFilter').value;
+    const combustibleFilter = document.getElementById('combustibleFilter').value;
+
+    vehiculosFiltrados = vehiculos.filter(vehiculo => {
+        const matchesSearch = !searchTerm || 
+            vehiculo.marca.toLowerCase().includes(searchTerm) ||
+            vehiculo.modelo.toLowerCase().includes(searchTerm) ||
+            (vehiculo.placa && vehiculo.placa.toLowerCase().includes(searchTerm));
+        
+        const matchesEstado = !estadoFilter || vehiculo.estado === estadoFilter;
+        const matchesTipo = !tipoFilter || vehiculo.tipo_vehiculo === tipoFilter;
+        const matchesCombustible = !combustibleFilter || vehiculo.combustible === combustibleFilter;
+
+        return matchesSearch && matchesEstado && matchesTipo && matchesCombustible;
+    });
+
+    renderVehiculos();
+}
+
+// Limpiar filtros
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('estadoFilter').value = '';
+    document.getElementById('tipoFilter').value = '';
+    document.getElementById('combustibleFilter').value = '';
+    vehiculosFiltrados = [...vehiculos];
+    renderVehiculos();
+}
+
+// Exportar a Excel
+function exportToExcel() {
+    // Implementar exportación a Excel
+    alert('Función de exportación en desarrollo');
+}
+
+// Abrir modal
+function openModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+// Guardar vehículo
+async function guardarVehiculo() {
+    const form = document.getElementById('nuevoVehiculoForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/vehiculos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Vehículo guardado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevoVehiculoModal')).hide();
+            form.reset();
+            loadVehiculos();
+        } else {
+            alert('Error al guardar el vehículo');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el vehículo');
+    }
+}
+
+// Editar vehículo
+function editarVehiculo(id) {
+    const vehiculo = vehiculos.find(v => v.id === id);
+    if (!vehiculo) return;
+
+    // Llenar formulario
+    document.getElementById('editVehiculoId').value = vehiculo.id;
+    document.getElementById('editMarca').value = vehiculo.marca;
+    document.getElementById('editModelo').value = vehiculo.modelo;
+    document.getElementById('editAño').value = vehiculo.año;
+    document.getElementById('editColor').value = vehiculo.color;
+    document.getElementById('editEstado').value = vehiculo.estado;
+    document.getElementById('editChasis').value = vehiculo.chasis;
+    document.getElementById('editMotor').value = vehiculo.motor;
+    document.getElementById('editPlaca').value = vehiculo.placa || '';
+    document.getElementById('editKilometraje').value = vehiculo.kilometraje || '';
+    document.getElementById('editPrecioVenta').value = vehiculo.precio_venta || '';
+    document.getElementById('editCombustible').value = vehiculo.combustible || '';
+    document.getElementById('editTransmision').value = vehiculo.transmision || '';
+    document.getElementById('editObservaciones').value = vehiculo.observaciones || '';
+
+    openModal('editarVehiculoModal');
+}
+
+// Actualizar vehículo
+async function actualizarVehiculo() {
+    const form = document.getElementById('editarVehiculoForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch(`/api/vehiculos/${data.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Vehículo actualizado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('editarVehiculoModal')).hide();
+            loadVehiculos();
+        } else {
+            alert('Error al actualizar el vehículo');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al actualizar el vehículo');
+    }
+}
+
+// Ver detalles
+function verDetalles(id) {
+    const vehiculo = vehiculos.find(v => v.id === id);
+    if (!vehiculo) return;
+
+    // Llenar detalles
+    document.getElementById('detalleId').textContent = vehiculo.id;
+    document.getElementById('detalleMarca').textContent = vehiculo.marca;
+    document.getElementById('detalleModelo').textContent = vehiculo.modelo;
+    document.getElementById('detalleAño').textContent = vehiculo.año;
+    document.getElementById('detalleColor').textContent = vehiculo.color;
+    document.getElementById('detalleEstado').textContent = vehiculo.estado;
+    document.getElementById('detalleChasis').textContent = vehiculo.chasis;
+    document.getElementById('detalleMotor').textContent = vehiculo.motor;
+    document.getElementById('detallePlaca').textContent = vehiculo.placa || '-';
+    document.getElementById('detalleKilometraje').textContent = vehiculo.kilometraje || '-';
+    document.getElementById('detalleCombustible').textContent = vehiculo.combustible || '-';
+    document.getElementById('detalleTransmision').textContent = vehiculo.transmision || '-';
+    document.getElementById('detallePrecioCompra').textContent = `₲ ${vehiculo.precio_compra?.toLocaleString() || '0'}`;
+    document.getElementById('detallePrecioVenta').textContent = vehiculo.precio_venta ? `₲ ${vehiculo.precio_venta.toLocaleString()}` : '-';
+    document.getElementById('detalleFechaIngreso').textContent = vehiculo.fecha_ingreso || '-';
+    document.getElementById('detalleObservaciones').textContent = vehiculo.observaciones || 'Sin observaciones';
+
+    openModal('verDetallesModal');
+}
+
+// Eliminar vehículo
+async function eliminarVehiculo(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este vehículo?')) return;
+
+    try {
+        const response = await fetch(`/api/vehiculos/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Vehículo eliminado exitosamente');
+            loadVehiculos();
+        } else {
+            alert('Error al eliminar el vehículo');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el vehículo');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    loadVehiculos();
+
+    // Filtros
+    document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+    document.getElementById('estadoFilter').addEventListener('change', aplicarFiltros);
+    document.getElementById('tipoFilter').addEventListener('change', aplicarFiltros);
+    document.getElementById('combustibleFilter').addEventListener('change', aplicarFiltros);
+});
+</script>
+{% endblock %} 

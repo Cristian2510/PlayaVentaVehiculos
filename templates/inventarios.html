@@ -1,0 +1,534 @@
+{% extends "base.html" %}
+
+{% block title %}Inventarios - Control de Stock{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Control de Inventarios</h5>
+                        <div>
+                            <button class="btn btn-primary me-2" onclick="exportarInventario()">
+                                <i class="fas fa-download me-2"></i>Exportar
+                            </button>
+                            <button class="btn btn-success" onclick="generarReporte()">
+                                <i class="fas fa-chart-bar me-2"></i>Reporte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="totalVehiculos">0</h3>
+                        <p>Total Vehículos</p>
+                    </div>
+                    <i class="fas fa-car fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="disponibles">0</h3>
+                        <p>Disponibles</p>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="vendidos">0</h3>
+                        <p>Vendidos</p>
+                    </div>
+                    <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 id="valorTotal">₲ 0</h3>
+                        <p>Valor Total</p>
+                    </div>
+                    <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Marca, modelo, placa...">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="estadoFilter">
+                                <option value="">Todos</option>
+                                <option value="Disponible">Disponible</option>
+                                <option value="Vendido">Vendido</option>
+                                <option value="En reparación">En reparación</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Marca</label>
+                            <select class="form-select" id="marcaFilter">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="tipoFilter">
+                                <option value="">Todos</option>
+                                <option value="Automóvil">Automóvil</option>
+                                <option value="Camioneta">Camioneta</option>
+                                <option value="Camión">Camión</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                            <button class="btn btn-secondary me-2" onclick="clearFilters()">
+                                <i class="fas fa-times me-2"></i>Limpiar
+                            </button>
+                            <button class="btn btn-primary" onclick="aplicarFiltros()">
+                                <i class="fas fa-search me-2"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="inventarioTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Año</th>
+                                    <th>Color</th>
+                                    <th>Placa</th>
+                                    <th>Estado</th>
+                                    <th>Precio Compra</th>
+                                    <th>Precio Venta</th>
+                                    <th>Días en Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventarioTableBody">
+                                <!-- Se llenará dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Detalles Vehículo -->
+<div class="modal fade" id="verDetallesVehiculoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-car me-2"></i>Detalles del Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información Básica</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>ID:</strong></td><td id="detalleId"></td></tr>
+                            <tr><td><strong>Marca:</strong></td><td id="detalleMarca"></td></tr>
+                            <tr><td><strong>Modelo:</strong></td><td id="detalleModelo"></td></tr>
+                            <tr><td><strong>Año:</strong></td><td id="detalleAño"></td></tr>
+                            <tr><td><strong>Color:</strong></td><td id="detalleColor"></td></tr>
+                            <tr><td><strong>Estado:</strong></td><td id="detalleEstado"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Información Técnica</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Chasis:</strong></td><td id="detalleChasis"></td></tr>
+                            <tr><td><strong>Motor:</strong></td><td id="detalleMotor"></td></tr>
+                            <tr><td><strong>Placa:</strong></td><td id="detallePlaca"></td></tr>
+                            <tr><td><strong>Kilometraje:</strong></td><td id="detalleKilometraje"></td></tr>
+                            <tr><td><strong>Combustible:</strong></td><td id="detalleCombustible"></td></tr>
+                            <tr><td><strong>Transmisión:</strong></td><td id="detalleTransmision"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6>Información Económica</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Precio Compra:</strong></td><td id="detallePrecioCompra"></td></tr>
+                            <tr><td><strong>Precio Venta:</strong></td><td id="detallePrecioVenta"></td></tr>
+                            <tr><td><strong>Fecha Ingreso:</strong></td><td id="detalleFechaIngreso"></td></tr>
+                            <tr><td><strong>Días en Stock:</strong></td><td id="detalleDiasStock"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Observaciones</h6>
+                        <p id="detalleObservaciones" class="text-muted"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="editarVehiculoDesdeInventario()">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reporte de Inventario -->
+<div class="modal fade" id="reporteInventarioModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-chart-bar me-2"></i>Reporte de Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Resumen por Estado</h6>
+                        <canvas id="estadoChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Resumen por Marca</h6>
+                        <canvas id="marcaChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6>Vehículos por Año</h6>
+                        <canvas id="añoChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Valor por Categoría</h6>
+                        <canvas id="valorChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirReporte()">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let vehiculos = [];
+let vehiculosFiltrados = [];
+
+// Cargar datos de inventario
+async function loadInventarioData() {
+    try {
+        const response = await fetch('/api/vehiculos');
+        vehiculos = await response.json();
+        vehiculosFiltrados = [...vehiculos];
+        
+        renderInventario();
+        updateStatistics();
+        updateFilters();
+        
+    } catch (error) {
+        console.error('Error cargando datos de inventario:', error);
+    }
+}
+
+// Renderizar tabla de inventario
+function renderInventario() {
+    const tbody = document.getElementById('inventarioTableBody');
+    tbody.innerHTML = '';
+
+    vehiculosFiltrados.forEach(vehiculo => {
+        const diasEnStock = calcularDiasEnStock(vehiculo.fecha_ingreso);
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${vehiculo.id}</td>
+            <td>${vehiculo.marca}</td>
+            <td>${vehiculo.modelo}</td>
+            <td>${vehiculo.año}</td>
+            <td>${vehiculo.color}</td>
+            <td>${vehiculo.placa || '-'}</td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(vehiculo.estado)}">
+                    ${vehiculo.estado}
+                </span>
+            </td>
+            <td>₲ ${vehiculo.precio_compra?.toLocaleString() || '0'}</td>
+            <td>₲ ${vehiculo.precio_venta?.toLocaleString() || '-'}</td>
+            <td>${diasEnStock}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="verDetallesVehiculo(${vehiculo.id})" title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editarVehiculo(${vehiculo.id})" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="venderVehiculo(${vehiculo.id})" title="Vender">
+                        <i class="fas fa-shopping-cart"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Calcular días en stock
+function calcularDiasEnStock(fechaIngreso) {
+    if (!fechaIngreso) return 0;
+    
+    const fechaIngresoDate = new Date(fechaIngreso);
+    const hoy = new Date();
+    const diferencia = hoy - fechaIngresoDate;
+    return Math.floor(diferencia / (1000 * 60 * 60 * 24));
+}
+
+// Obtener clase de badge según estado
+function getEstadoBadgeClass(estado) {
+    switch(estado) {
+        case 'Disponible': return 'badge-success';
+        case 'Vendido': return 'badge-danger';
+        case 'En reparación': return 'badge-warning';
+        default: return 'badge-secondary';
+    }
+}
+
+// Actualizar estadísticas
+function updateStatistics() {
+    const total = vehiculos.length;
+    const disponibles = vehiculos.filter(v => v.estado === 'Disponible').length;
+    const vendidos = vehiculos.filter(v => v.estado === 'Vendido').length;
+    const valorTotal = vehiculos.reduce((total, v) => total + (v.precio_compra || 0), 0);
+
+    document.getElementById('totalVehiculos').textContent = total;
+    document.getElementById('disponibles').textContent = disponibles;
+    document.getElementById('vendidos').textContent = vendidos;
+    document.getElementById('valorTotal').textContent = `₲ ${valorTotal.toLocaleString()}`;
+}
+
+// Actualizar filtros
+function updateFilters() {
+    // Actualizar filtro de marcas
+    const marcas = [...new Set(vehiculos.map(v => v.marca))];
+    const marcaFilter = document.getElementById('marcaFilter');
+    marcaFilter.innerHTML = '<option value="">Todas</option>';
+    marcas.forEach(marca => {
+        marcaFilter.innerHTML += `<option value="${marca}">${marca}</option>`;
+    });
+}
+
+// Aplicar filtros
+function aplicarFiltros() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const estadoFilter = document.getElementById('estadoFilter').value;
+    const marcaFilter = document.getElementById('marcaFilter').value;
+    const tipoFilter = document.getElementById('tipoFilter').value;
+
+    vehiculosFiltrados = vehiculos.filter(vehiculo => {
+        const matchesSearch = !searchTerm || 
+            vehiculo.marca.toLowerCase().includes(searchTerm) ||
+            vehiculo.modelo.toLowerCase().includes(searchTerm) ||
+            (vehiculo.placa && vehiculo.placa.toLowerCase().includes(searchTerm));
+        
+        const matchesEstado = !estadoFilter || vehiculo.estado === estadoFilter;
+        const matchesMarca = !marcaFilter || vehiculo.marca === marcaFilter;
+        const matchesTipo = !tipoFilter || vehiculo.tipo_vehiculo === tipoFilter;
+
+        return matchesSearch && matchesEstado && matchesMarca && matchesTipo;
+    });
+
+    renderInventario();
+}
+
+// Limpiar filtros
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('estadoFilter').value = '';
+    document.getElementById('marcaFilter').value = '';
+    document.getElementById('tipoFilter').value = '';
+    vehiculosFiltrados = [...vehiculos];
+    renderInventario();
+}
+
+// Exportar inventario
+function exportarInventario() {
+    // Implementar exportación a Excel/PDF
+    alert('Función de exportación en desarrollo');
+}
+
+// Generar reporte
+function generarReporte() {
+    openModal('reporteInventarioModal');
+    setTimeout(() => {
+        generarGraficos();
+    }, 100);
+}
+
+// Generar gráficos
+function generarGraficos() {
+    // Gráfico por estado
+    const estadoCtx = document.getElementById('estadoChart').getContext('2d');
+    const estadoData = {
+        labels: ['Disponible', 'Vendido', 'En reparación'],
+        datasets: [{
+            data: [
+                vehiculos.filter(v => v.estado === 'Disponible').length,
+                vehiculos.filter(v => v.estado === 'Vendido').length,
+                vehiculos.filter(v => v.estado === 'En reparación').length
+            ],
+            backgroundColor: ['#10b981', '#ef4444', '#f59e0b']
+        }]
+    };
+    new Chart(estadoCtx, {
+        type: 'doughnut',
+        data: estadoData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Gráfico por marca
+    const marcas = [...new Set(vehiculos.map(v => v.marca))];
+    const marcaCtx = document.getElementById('marcaChart').getContext('2d');
+    const marcaData = {
+        labels: marcas,
+        datasets: [{
+            label: 'Cantidad',
+            data: marcas.map(marca => vehiculos.filter(v => v.marca === marca).length),
+            backgroundColor: '#2563eb'
+        }]
+    };
+    new Chart(marcaCtx, {
+        type: 'bar',
+        data: marcaData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+// Ver detalles del vehículo
+function verDetallesVehiculo(id) {
+    const vehiculo = vehiculos.find(v => v.id === id);
+    if (!vehiculo) return;
+
+    // Llenar detalles
+    document.getElementById('detalleId').textContent = vehiculo.id;
+    document.getElementById('detalleMarca').textContent = vehiculo.marca;
+    document.getElementById('detalleModelo').textContent = vehiculo.modelo;
+    document.getElementById('detalleAño').textContent = vehiculo.año;
+    document.getElementById('detalleColor').textContent = vehiculo.color;
+    document.getElementById('detalleEstado').textContent = vehiculo.estado;
+    document.getElementById('detalleChasis').textContent = vehiculo.chasis;
+    document.getElementById('detalleMotor').textContent = vehiculo.motor;
+    document.getElementById('detallePlaca').textContent = vehiculo.placa || '-';
+    document.getElementById('detalleKilometraje').textContent = vehiculo.kilometraje || '-';
+    document.getElementById('detalleCombustible').textContent = vehiculo.combustible || '-';
+    document.getElementById('detalleTransmision').textContent = vehiculo.transmision || '-';
+    document.getElementById('detallePrecioCompra').textContent = `₲ ${vehiculo.precio_compra?.toLocaleString() || '0'}`;
+    document.getElementById('detallePrecioVenta').textContent = vehiculo.precio_venta ? `₲ ${vehiculo.precio_venta.toLocaleString()}` : '-';
+    document.getElementById('detalleFechaIngreso').textContent = vehiculo.fecha_ingreso || '-';
+    document.getElementById('detalleDiasStock').textContent = calcularDiasEnStock(vehiculo.fecha_ingreso);
+    document.getElementById('detalleObservaciones').textContent = vehiculo.observaciones || 'Sin observaciones';
+
+    openModal('verDetallesVehiculoModal');
+}
+
+// Editar vehículo
+function editarVehiculo(id) {
+    // Redirigir a la página de catastros para editar
+    window.location.href = `/catastros?edit=${id}`;
+}
+
+// Editar vehículo desde inventario
+function editarVehiculoDesdeInventario() {
+    const vehiculoId = document.getElementById('detalleId').textContent;
+    editarVehiculo(vehiculoId);
+}
+
+// Vender vehículo
+function venderVehiculo(id) {
+    // Redirigir a la página de ventas
+    window.location.href = `/facturacion?venta=${id}`;
+}
+
+// Imprimir reporte
+function imprimirReporte() {
+    window.print();
+}
+
+// Abrir modal
+function openModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    loadInventarioData();
+
+    // Filtros
+    document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+    document.getElementById('estadoFilter').addEventListener('change', aplicarFiltros);
+    document.getElementById('marcaFilter').addEventListener('change', aplicarFiltros);
+    document.getElementById('tipoFilter').addEventListener('change', aplicarFiltros);
+});
+</script>
+{% endblock %} 

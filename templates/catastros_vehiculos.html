@@ -1,0 +1,1144 @@
+{% extends "base.html" %}
+
+{% block title %}Catastros Vehículos - Gestión de Vehículos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-volver me-3" onclick="window.location.href='/'">
+                                <i class="fas fa-arrow-left"></i>Volver
+                            </button>
+                            <h5 class="mb-0"><i class="fas fa-car me-2"></i>Catastros de Vehículos</h5>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <!-- Currency Selector -->
+                            <div class="me-3">
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="moneda" id="monedaG" value="G" checked>
+                                    <label class="btn btn-outline-primary btn-sm" for="monedaG">PYG</label>
+                                    <input type="radio" class="btn-check" name="moneda" id="monedaUSD" value="USD">
+                                    <label class="btn btn-outline-primary btn-sm" for="monedaUSD">USD</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="openModal('nuevoVehiculoModal')">
+                                <i class="fas fa-plus me-2"></i>Nuevo Vehículo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Marca, modelo, placa...">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="estadoFilter">
+                                <option value="">Todos</option>
+                                <option value="Disponible">Disponible</option>
+                                <option value="Vendido">Vendido</option>
+                                <option value="En reparación">En reparación</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="tipoFilter">
+                                <option value="">Todos</option>
+                                <option value="Automóvil">Automóvil</option>
+                                <option value="Camioneta">Camioneta</option>
+                                <option value="Camión">Camión</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Combustible</label>
+                            <select class="form-select" id="combustibleFilter">
+                                <option value="">Todos</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                            <button class="btn btn-secondary me-2" onclick="clearFilters()">
+                                <i class="fas fa-times me-2"></i>Limpiar
+                            </button>
+                            <button class="btn btn-primary" onclick="exportToExcel()">
+                                <i class="fas fa-download me-2"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicles Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="vehiculosTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 5%">ID</th>
+                                    <th style="width: 12%">Marca</th>
+                                    <th style="width: 12%">Modelo</th>
+                                    <th style="width: 7%">Año</th>
+                                    <th style="width: 10%">Color</th>
+                                    <th style="width: 8%">Placa</th>
+                                    <th style="width: 12%">Chasis</th>
+                                    <th style="width: 12%">Precio Compra</th>
+                                    <th style="width: 12%">Precio Venta</th>
+                                    <th style="width: 8%">Estado</th>
+                                    <th style="width: 10%">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehiculosTableBody">
+                                <!-- Los datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Vehículo -->
+<div class="modal fade" id="nuevoVehiculoModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-car me-2"></i>Nuevo Vehículo</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <form id="nuevoVehiculoForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <!-- Columna Izquierda: Datos del Vehículo -->
+                        <div class="col-md-8">
+                            <!-- Primera fila: Marca, Modelo, Año -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Marca *</label>
+                                    <input type="text" class="form-control form-control-sm" name="marca" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Modelo *</label>
+                                    <input type="text" class="form-control form-control-sm" name="modelo" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Año *</label>
+                                    <input type="number" class="form-control form-control-sm" name="año" min="1900" max="2030" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Segunda fila: Color, Tipo, Estado -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Color *</label>
+                                    <input type="text" class="form-control form-control-sm" name="color" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Tipo de Vehículo</label>
+                                    <select class="form-select form-select-sm" name="tipo_vehiculo">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Automóvil">Automóvil</option>
+                                        <option value="Camioneta">Camioneta</option>
+                                        <option value="Camión">Camión</option>
+                                        <option value="Moto">Moto</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Estado</label>
+                                    <select class="form-select form-select-sm" name="estado">
+                                        <option value="Disponible">Disponible</option>
+                                        <option value="Vendido">Vendido</option>
+                                        <option value="En reparación">En reparación</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Tercera fila: Chasis, Motor, Placa -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Número de Chasis *</label>
+                                    <input type="text" class="form-control form-control-sm" name="chasis" maxlength="17" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Número de Motor *</label>
+                                    <input type="text" class="form-control form-control-sm" name="motor" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Placa</label>
+                                    <input type="text" class="form-control form-control-sm" name="placa" maxlength="10">
+                                </div>
+                            </div>
+                            
+                            <!-- Cuarta fila: Kilometraje, Combustible, Transmisión -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Kilometraje</label>
+                                    <input type="number" class="form-control form-control-sm" name="kilometraje" min="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Combustible</label>
+                                    <select class="form-select form-select-sm" name="combustible">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Gasolina">Gasolina</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Eléctrico">Eléctrico</option>
+                                        <option value="Híbrido">Híbrido</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Transmisión</label>
+                                    <select class="form-select form-select-sm" name="transmision">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automática">Automática</option>
+                                        <option value="CVT">CVT</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Quinta fila: Precios con monedas -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Precio de Compra *</label>
+                                    <div class="row g-1">
+                                        <div class="col-6">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">Gs</span>
+                                                <input type="number" class="form-control" name="precio_compra_pyg" id="precioCompraPYG" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">US</span>
+                                                <input type="number" class="form-control" name="precio_compra_usd" id="precioCompraUSD" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Precio de Venta</label>
+                                    <div class="row g-1">
+                                        <div class="col-6">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">Gs</span>
+                                                <input type="number" class="form-control" name="precio_venta_pyg" id="precioVentaPYG" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">US</span>
+                                                <input type="number" class="form-control" name="precio_venta_usd" id="precioVentaUSD" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sexta fila: Observaciones -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-12">
+                                    <label class="form-label small mb-1">Observaciones</label>
+                                    <textarea class="form-control form-control-sm" name="observaciones" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Columna Derecha: Imágenes del Vehículo -->
+                        <div class="col-md-4">
+                            <label class="form-label small mb-2"><i class="fas fa-images me-1"></i>Imágenes del Vehículo</label>
+                            <div class="row g-2">
+                                <!-- Imagen 1 -->
+                                <div class="col-6">
+                                    <div class="upload-container">
+                                        <input type="file" class="form-control form-control-sm image-input" name="imagen1" accept="image/*" id="imagen1" onchange="previewImage(this, 'preview1')">
+                                        <div class="image-preview" id="preview1">
+                                            <i class="fas fa-camera"></i>
+                                            <small>Imagen 1</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Imagen 2 -->
+                                <div class="col-6">
+                                    <div class="upload-container">
+                                        <input type="file" class="form-control form-control-sm image-input" name="imagen2" accept="image/*" id="imagen2" onchange="previewImage(this, 'preview2')">
+                                        <div class="image-preview" id="preview2">
+                                            <i class="fas fa-camera"></i>
+                                            <small>Imagen 2</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Imagen 3 -->
+                                <div class="col-6">
+                                    <div class="upload-container">
+                                        <input type="file" class="form-control form-control-sm image-input" name="imagen3" accept="image/*" id="imagen3" onchange="previewImage(this, 'preview3')">
+                                        <div class="image-preview" id="preview3">
+                                            <i class="fas fa-camera"></i>
+                                            <small>Imagen 3</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Imagen 4 -->
+                                <div class="col-6">
+                                    <div class="upload-container">
+                                        <input type="file" class="form-control form-control-sm image-input" name="imagen4" accept="image/*" id="imagen4" onchange="previewImage(this, 'preview4')">
+                                        <div class="image-preview" id="preview4">
+                                            <i class="fas fa-camera"></i>
+                                            <small>Imagen 4</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Botón para limpiar imágenes -->
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="clearAllImages()">
+                                    <i class="fas fa-trash me-1"></i>Limpiar Imágenes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="guardarVehiculo()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Vehículo -->
+<div class="modal fade" id="editarVehiculoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-edit me-2"></i>Editar Vehículo</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <form id="editarVehiculoForm">
+                    <input type="hidden" name="id" id="editVehiculoId">
+                    
+                    <!-- Primera fila: Marca, Modelo, Año -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Marca *</label>
+                            <input type="text" class="form-control form-control-sm" name="marca" id="editMarca" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Modelo *</label>
+                            <input type="text" class="form-control form-control-sm" name="modelo" id="editModelo" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Año *</label>
+                            <input type="number" class="form-control form-control-sm" name="año" id="editAño" min="1900" max="2030" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Segunda fila: Color, Tipo, Estado -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Color *</label>
+                            <input type="text" class="form-control form-control-sm" name="color" id="editColor" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Tipo de Vehículo</label>
+                            <select class="form-select form-select-sm" name="tipo_vehiculo" id="editTipoVehiculo">
+                                <option value="">Seleccionar...</option>
+                                <option value="Automóvil">Automóvil</option>
+                                <option value="Camioneta">Camioneta</option>
+                                <option value="Camión">Camión</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Estado</label>
+                            <select class="form-select form-select-sm" name="estado" id="editEstado">
+                                <option value="Disponible">Disponible</option>
+                                <option value="Vendido">Vendido</option>
+                                <option value="En reparación">En reparación</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Tercera fila: Chasis, Motor, Placa -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Número de Chasis *</label>
+                            <input type="text" class="form-control form-control-sm" name="chasis" id="editChasis" maxlength="17" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Número de Motor *</label>
+                            <input type="text" class="form-control form-control-sm" name="motor" id="editMotor" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Placa</label>
+                            <input type="text" class="form-control form-control-sm" name="placa" id="editPlaca" maxlength="10">
+                        </div>
+                    </div>
+                    
+                    <!-- Cuarta fila: Kilometraje, Combustible, Transmisión -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Kilometraje</label>
+                            <input type="number" class="form-control form-control-sm" name="kilometraje" id="editKilometraje" min="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Combustible</label>
+                            <select class="form-select form-select-sm" name="combustible" id="editCombustible">
+                                <option value="">Seleccionar...</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Transmisión</label>
+                            <select class="form-select form-select-sm" name="transmision" id="editTransmision">
+                                <option value="">Seleccionar...</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automática">Automática</option>
+                                <option value="CVT">CVT</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Quinta fila: Precios con monedas -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small mb-1">Precio de Compra *</label>
+                            <div class="row g-1">
+                                                                 <div class="col-6">
+                                     <div class="input-group input-group-sm">
+                                         <span class="input-group-text">Gs</span>
+                                         <input type="number" class="form-control" name="precio_compra_pyg" id="editPrecioCompraPYG" step="0.01" min="0" required>
+                                     </div>
+                                 </div>
+                                 <div class="col-6">
+                                     <div class="input-group input-group-sm">
+                                         <span class="input-group-text">US</span>
+                                         <input type="number" class="form-control" name="precio_compra_usd" id="editPrecioCompraUSD" step="0.01" min="0">
+                                     </div>
+                                 </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small mb-1">Precio de Venta</label>
+                            <div class="row g-1">
+                                                                 <div class="col-6">
+                                     <div class="input-group input-group-sm">
+                                         <span class="input-group-text">Gs</span>
+                                         <input type="number" class="form-control" name="precio_venta_pyg" id="editPrecioVentaPYG" step="0.01" min="0">
+                                     </div>
+                                 </div>
+                                 <div class="col-6">
+                                     <div class="input-group input-group-sm">
+                                         <span class="input-group-text">US</span>
+                                         <input type="number" class="form-control" name="precio_venta_usd" id="editPrecioVentaUSD" step="0.01" min="0">
+                                     </div>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sexta fila: Observaciones -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <label class="form-label small mb-1">Observaciones</label>
+                            <textarea class="form-control form-control-sm" name="observaciones" id="editObservaciones" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning btn-sm" onclick="actualizarVehiculo()">Actualizar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos para tabla compacta */
+.table-sm td, .table-sm th {
+    padding: 0.4rem 0.3rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+    cursor: pointer;
+}
+
+.lh-1 {
+    line-height: 1 !important;
+}
+
+.btn-group-sm .btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+}
+
+/* Compactar aún más los precios */
+.price-compact {
+    font-size: 0.8rem;
+}
+
+.price-compact .fw-bold {
+    font-weight: 600;
+}
+
+/* Hacer el chasis más compacto */
+.font-monospace {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+}
+
+/* Estados más compactos */
+.badge.small {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+}
+
+/* ID más destacado */
+.table td strong {
+    color: #495057;
+    font-weight: 700;
+}
+
+/* Optimización del header */
+.table-dark th {
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.5rem 0.3rem;
+}
+
+/* Estilos para upload de imágenes */
+.upload-container {
+    position: relative;
+    height: 120px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.upload-container:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.upload-container.has-image {
+    border: 2px solid #28a745;
+    background: #fff;
+}
+
+.image-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.image-preview {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 6px;
+}
+
+.image-preview i {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.image-preview small {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.image-preview.has-image {
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.image-preview.has-image i {
+    display: none;
+}
+
+.image-preview.has-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    z-index: -1;
+}
+
+/* Botón de eliminar imagen individual */
+.image-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(220, 53, 69, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    transition: all 0.2s ease;
+}
+
+.image-remove:hover {
+    background: rgba(220, 53, 69, 1);
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let vehiculos = [];
+    let filteredVehiculos = [];
+    let monedaActual = 'G';
+    const tasaCambio = 7300; // 1 USD = 7300 PYG (aproximado)
+
+    // Cargar vehículos al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+        loadVehiculos();
+        setupMonedaListeners();
+        setupNuevoVehiculoListeners();
+    });
+
+    // Función para cargar vehículos
+    async function loadVehiculos() {
+        try {
+            const response = await fetch('/api/vehiculos');
+            vehiculos = await response.json();
+            filteredVehiculos = [...vehiculos];
+            renderVehiculos();
+        } catch (error) {
+            console.error('Error cargando vehículos:', error);
+        }
+    }
+
+    // Función para configurar listeners de moneda
+    function setupMonedaListeners() {
+        document.getElementById('monedaG').addEventListener('change', cambiarMoneda);
+        document.getElementById('monedaUSD').addEventListener('change', cambiarMoneda);
+    }
+
+    // Función para cambiar moneda
+    function cambiarMoneda() {
+        const monedaG = document.getElementById('monedaG');
+        const monedaUSD = document.getElementById('monedaUSD');
+        
+        if (monedaG.checked) {
+            monedaActual = 'G';
+        } else if (monedaUSD.checked) {
+            monedaActual = 'USD';
+        }
+        
+        renderVehiculos();
+    }
+
+    // Función para formatear moneda
+    function formatearMoneda(valor, moneda = monedaActual) {
+        if (moneda === 'USD') {
+            return `$ ${valor.toLocaleString()}`;
+        } else {
+            return `G ${valor.toLocaleString()}`;
+        }
+    }
+
+    // Función para convertir moneda
+    function convertirMoneda(valor, deMoneda, aMoneda) {
+        if (deMoneda === aMoneda) return valor;
+        
+        if (deMoneda === 'G' && aMoneda === 'USD') {
+            return valor / tasaCambio;
+        } else if (deMoneda === 'USD' && aMoneda === 'G') {
+            return valor * tasaCambio;
+        }
+        
+        return valor;
+    }
+
+    // Función para renderizar vehículos
+    function renderVehiculos() {
+        const tbody = document.getElementById('vehiculosTableBody');
+        tbody.innerHTML = '';
+
+        filteredVehiculos.forEach(vehiculo => {
+            const precioCompraPYG = vehiculo.precio_compra;
+            const precioCompraUSD = Math.round(vehiculo.precio_compra / tasaCambio * 100) / 100;
+            const precioVentaPYG = vehiculo.precio_venta;
+            const precioVentaUSD = vehiculo.precio_venta ? Math.round(vehiculo.precio_venta / tasaCambio * 100) / 100 : null;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-center"><strong>${vehiculo.id}</strong></td>
+                <td class="fw-bold">${vehiculo.marca}</td>
+                <td>${vehiculo.modelo}</td>
+                <td class="text-center">${vehiculo.año}</td>
+                <td class="small">${vehiculo.color}</td>
+                <td class="text-center small">${vehiculo.placa || '-'}</td>
+                <td class="small font-monospace">${vehiculo.chasis.substring(0, 12)}...</td>
+                <td class="p-1">
+                    <div class="small lh-1">
+                        <div class="text-primary fw-bold">Gs ${precioCompraPYG.toLocaleString()}</div>
+                        <div class="text-muted">US ${precioCompraUSD.toLocaleString()}</div>
+                    </div>
+                </td>
+                <td class="p-1">
+                    ${precioVentaPYG ? `
+                        <div class="small lh-1">
+                            <div class="text-success fw-bold">Gs ${precioVentaPYG.toLocaleString()}</div>
+                            <div class="text-muted">US ${precioVentaUSD.toLocaleString()}</div>
+                        </div>
+                    ` : '<span class="text-muted">-</span>'}
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-${getEstadoBadgeClass(vehiculo.estado)} small">
+                        ${vehiculo.estado === 'Disponible' ? 'Disp.' : vehiculo.estado === 'En reparación' ? 'Rep.' : vehiculo.estado}
+                    </span>
+                </td>
+                <td class="text-center p-1">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-warning btn-sm" onclick="editarVehiculo(${vehiculo.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="eliminarVehiculo(${vehiculo.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Función para obtener clase de badge según estado
+    function getEstadoBadgeClass(estado) {
+        switch(estado) {
+            case 'Disponible': return 'success';
+            case 'Vendido': return 'danger';
+            case 'En reparación': return 'warning';
+            default: return 'info';
+        }
+    }
+
+    // Función para abrir modal
+    function openModal(modalId) {
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+    }
+
+    // Función para configurar listeners de precios para nuevo vehículo
+    function setupNuevoVehiculoListeners() {
+        // Conversión automática PYG -> USD
+        document.getElementById('precioCompraPYG').addEventListener('input', function() {
+            const valorPYG = parseFloat(this.value) || 0;
+            const valorUSD = Math.round(valorPYG / tasaCambio * 100) / 100;
+            document.getElementById('precioCompraUSD').value = valorUSD;
+        });
+        
+        document.getElementById('precioVentaPYG').addEventListener('input', function() {
+            const valorPYG = parseFloat(this.value) || 0;
+            const valorUSD = Math.round(valorPYG / tasaCambio * 100) / 100;
+            document.getElementById('precioVentaUSD').value = valorUSD;
+        });
+        
+        // Conversión automática USD -> PYG
+        document.getElementById('precioCompraUSD').addEventListener('input', function() {
+            const valorUSD = parseFloat(this.value) || 0;
+            const valorPYG = Math.round(valorUSD * tasaCambio);
+            document.getElementById('precioCompraPYG').value = valorPYG;
+        });
+        
+        document.getElementById('precioVentaUSD').addEventListener('input', function() {
+            const valorUSD = parseFloat(this.value) || 0;
+            const valorPYG = Math.round(valorUSD * tasaCambio);
+            document.getElementById('precioVentaPYG').value = valorPYG;
+        });
+    }
+
+    // Función para guardar vehículo
+    async function guardarVehiculo() {
+        const form = document.getElementById('nuevoVehiculoForm');
+        const formData = new FormData(form);
+        
+        // Convertir precios a PYG para guardar en la base de datos
+        const precioCompraPYG = parseFloat(formData.get('precio_compra_pyg')) || 0;
+        const precioVentaPYG = parseFloat(formData.get('precio_venta_pyg')) || null;
+        
+        // Crear objeto con datos principales
+        const vehiculoData = {
+            marca: formData.get('marca'),
+            modelo: formData.get('modelo'),
+            año: formData.get('año'),
+            color: formData.get('color'),
+            tipo_vehiculo: formData.get('tipo_vehiculo'),
+            estado: formData.get('estado'),
+            chasis: formData.get('chasis'),
+            motor: formData.get('motor'),
+            placa: formData.get('placa'),
+            kilometraje: formData.get('kilometraje'),
+            combustible: formData.get('combustible'),
+            transmision: formData.get('transmision'),
+            observaciones: formData.get('observaciones'),
+            precio_compra: precioCompraPYG,
+            precio_venta: precioVentaPYG
+        };
+
+        try {
+            // Primero guardamos los datos del vehículo
+            const response = await fetch('/api/vehiculos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(vehiculoData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Si hay imágenes, las subimos por separado
+                const hasImages = formData.get('imagen1') || formData.get('imagen2') || 
+                                  formData.get('imagen3') || formData.get('imagen4');
+                
+                if (hasImages) {
+                    const imageFormData = new FormData();
+                    imageFormData.append('vehiculo_id', result.id);
+                    
+                    // Agregar solo las imágenes que fueron seleccionadas
+                    for (let i = 1; i <= 4; i++) {
+                        const imagen = formData.get(`imagen${i}`);
+                        if (imagen && imagen.size > 0) {
+                            imageFormData.append(`imagen${i}`, imagen);
+                        }
+                    }
+                    
+                    try {
+                        const imageResponse = await fetch('/api/vehiculos/imagenes', {
+                            method: 'POST',
+                            body: imageFormData
+                        });
+                        
+                        if (!imageResponse.ok) {
+                            console.warn('Error subiendo imágenes, pero vehículo guardado');
+                        }
+                    } catch (imageError) {
+                        console.warn('Error subiendo imágenes:', imageError);
+                    }
+                }
+
+                // Cerrar modal y recargar datos
+                bootstrap.Modal.getInstance(document.getElementById('nuevoVehiculoModal')).hide();
+                form.reset();
+                clearAllImages();
+                loadVehiculos();
+                alert('Vehículo guardado exitosamente');
+            } else {
+                alert('Error: ' + (result.error || 'No se pudo guardar el vehículo'));
+            }
+        } catch (error) {
+            console.error('Error guardando vehículo:', error);
+            alert('Error al guardar vehículo');
+        }
+    }
+
+    // Función para editar vehículo
+    async function editarVehiculo(id) {
+        try {
+            const response = await fetch(`/api/vehiculos/${id}`);
+            const vehiculo = await response.json();
+            
+            if (vehiculo) {
+                // Llenar formulario con datos del vehículo
+                document.getElementById('editVehiculoId').value = vehiculo.id;
+                document.getElementById('editMarca').value = vehiculo.marca;
+                document.getElementById('editModelo').value = vehiculo.modelo;
+                document.getElementById('editAño').value = vehiculo.año;
+                document.getElementById('editColor').value = vehiculo.color;
+                document.getElementById('editChasis').value = vehiculo.chasis;
+                document.getElementById('editMotor').value = vehiculo.motor;
+                document.getElementById('editPlaca').value = vehiculo.placa || '';
+                document.getElementById('editKilometraje').value = vehiculo.kilometraje || '';
+                document.getElementById('editCombustible').value = vehiculo.combustible || '';
+                document.getElementById('editTransmision').value = vehiculo.transmision || '';
+                document.getElementById('editTipoVehiculo').value = vehiculo.tipo_vehiculo || '';
+                document.getElementById('editEstado').value = vehiculo.estado;
+                
+                // Llenar precios en ambas monedas
+                document.getElementById('editPrecioCompraPYG').value = vehiculo.precio_compra;
+                document.getElementById('editPrecioCompraUSD').value = Math.round(vehiculo.precio_compra / tasaCambio * 100) / 100;
+                
+                if (vehiculo.precio_venta) {
+                    document.getElementById('editPrecioVentaPYG').value = vehiculo.precio_venta;
+                    document.getElementById('editPrecioVentaUSD').value = Math.round(vehiculo.precio_venta / tasaCambio * 100) / 100;
+                }
+                
+                document.getElementById('editObservaciones').value = vehiculo.observaciones || '';
+                
+                // Configurar listeners para conversión automática
+                setupPrecioListeners();
+                
+                openModal('editarVehiculoModal');
+            }
+        } catch (error) {
+            console.error('Error cargando vehículo:', error);
+            alert('Error al cargar datos del vehículo');
+        }
+    }
+
+    // Función para configurar listeners de precios
+    function setupPrecioListeners() {
+        // Conversión automática PYG -> USD
+        document.getElementById('editPrecioCompraPYG').addEventListener('input', function() {
+            const valorPYG = parseFloat(this.value) || 0;
+            const valorUSD = Math.round(valorPYG / tasaCambio * 100) / 100;
+            document.getElementById('editPrecioCompraUSD').value = valorUSD;
+        });
+        
+        document.getElementById('editPrecioVentaPYG').addEventListener('input', function() {
+            const valorPYG = parseFloat(this.value) || 0;
+            const valorUSD = Math.round(valorPYG / tasaCambio * 100) / 100;
+            document.getElementById('editPrecioVentaUSD').value = valorUSD;
+        });
+        
+        // Conversión automática USD -> PYG
+        document.getElementById('editPrecioCompraUSD').addEventListener('input', function() {
+            const valorUSD = parseFloat(this.value) || 0;
+            const valorPYG = Math.round(valorUSD * tasaCambio);
+            document.getElementById('editPrecioCompraPYG').value = valorPYG;
+        });
+        
+        document.getElementById('editPrecioVentaUSD').addEventListener('input', function() {
+            const valorUSD = parseFloat(this.value) || 0;
+            const valorPYG = Math.round(valorUSD * tasaCambio);
+            document.getElementById('editPrecioVentaPYG').value = valorPYG;
+        });
+    }
+
+    // Función para actualizar vehículo
+    async function actualizarVehiculo() {
+        const form = document.getElementById('editarVehiculoForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        const vehiculoId = data.id;
+
+        // Usar el precio en PYG como principal (se guarda en la base de datos)
+        data.precio_compra = parseFloat(data.precio_compra_pyg) || 0;
+        data.precio_venta = parseFloat(data.precio_venta_pyg) || null;
+
+        try {
+            const response = await fetch(`/api/vehiculos/${vehiculoId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Cerrar modal y recargar datos
+                bootstrap.Modal.getInstance(document.getElementById('editarVehiculoModal')).hide();
+                loadVehiculos();
+                alert('Vehículo actualizado exitosamente');
+            } else {
+                alert('Error: ' + (result.error || 'No se pudo actualizar el vehículo'));
+            }
+        } catch (error) {
+            console.error('Error actualizando vehículo:', error);
+            alert('Error al actualizar vehículo');
+        }
+    }
+
+    // Función para eliminar vehículo
+    async function eliminarVehiculo(id) {
+        if (confirm('¿Está seguro de que desea eliminar este vehículo?')) {
+            try {
+                const response = await fetch(`/api/vehiculos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    loadVehiculos();
+                    alert('Vehículo eliminado exitosamente');
+                } else {
+                    alert('Error: ' + (result.error || 'No se pudo eliminar el vehículo'));
+                }
+            } catch (error) {
+                console.error('Error eliminando vehículo:', error);
+                alert('Error al eliminar vehículo');
+            }
+        }
+    }
+
+    // Función para previsualizar imagen
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        const container = input.parentElement;
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                preview.style.backgroundImage = `url(${e.target.result})`;
+                preview.classList.add('has-image');
+                container.classList.add('has-image');
+                
+                // Agregar botón de eliminar si no existe
+                if (!container.querySelector('.image-remove')) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'image-remove';
+                    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    removeBtn.onclick = function(e) {
+                        e.preventDefault();
+                        clearImage(input, previewId);
+                    };
+                    container.appendChild(removeBtn);
+                }
+            };
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Función para limpiar una imagen específica
+    function clearImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        const container = input.parentElement;
+        const removeBtn = container.querySelector('.image-remove');
+        
+        input.value = '';
+        preview.style.backgroundImage = '';
+        preview.classList.remove('has-image');
+        container.classList.remove('has-image');
+        
+        if (removeBtn) {
+            removeBtn.remove();
+        }
+    }
+
+    // Función para limpiar todas las imágenes
+    function clearAllImages() {
+        const imageInputs = ['imagen1', 'imagen2', 'imagen3', 'imagen4'];
+        const previews = ['preview1', 'preview2', 'preview3', 'preview4'];
+        
+        for (let i = 0; i < imageInputs.length; i++) {
+            const input = document.getElementById(imageInputs[i]);
+            clearImage(input, previews[i]);
+        }
+    }
+
+    // Función para limpiar filtros
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('estadoFilter').value = '';
+        document.getElementById('tipoFilter').value = '';
+        document.getElementById('combustibleFilter').value = '';
+        filteredVehiculos = [...vehiculos];
+        renderVehiculos();
+    }
+
+    // Función para exportar a Excel
+    function exportToExcel() {
+        // Implementar exportación a Excel
+        alert('Función de exportación en desarrollo');
+    }
+
+    // Event listeners para filtros
+    document.getElementById('searchInput').addEventListener('input', filterVehiculos);
+    document.getElementById('estadoFilter').addEventListener('change', filterVehiculos);
+    document.getElementById('tipoFilter').addEventListener('change', filterVehiculos);
+    document.getElementById('combustibleFilter').addEventListener('change', filterVehiculos);
+
+    // Función para filtrar vehículos
+    function filterVehiculos() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const estadoFilter = document.getElementById('estadoFilter').value;
+        const tipoFilter = document.getElementById('tipoFilter').value;
+        const combustibleFilter = document.getElementById('combustibleFilter').value;
+
+        filteredVehiculos = vehiculos.filter(vehiculo => {
+            const matchesSearch = !searchTerm || 
+                vehiculo.marca.toLowerCase().includes(searchTerm) ||
+                vehiculo.modelo.toLowerCase().includes(searchTerm) ||
+                (vehiculo.placa && vehiculo.placa.toLowerCase().includes(searchTerm));
+            
+            const matchesEstado = !estadoFilter || vehiculo.estado === estadoFilter;
+            const matchesTipo = !tipoFilter || vehiculo.tipo_vehiculo === tipoFilter;
+            const matchesCombustible = !combustibleFilter || vehiculo.combustible === combustibleFilter;
+
+            return matchesSearch && matchesEstado && matchesTipo && matchesCombustible;
+        });
+
+        renderVehiculos();
+    }
+</script>
+{% endblock %} 
